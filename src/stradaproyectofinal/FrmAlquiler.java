@@ -1,51 +1,36 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package stradaproyectofinal;
 
 import clases.Estilos;
 import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
+import clases.User;                            // <-- SESIÓN
+
 import java.awt.Image;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
+import java.text.DecimalFormat;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-
-import clases.Estilos;
-import java.awt.event.KeyEvent;
-import java.text.DecimalFormat;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-
-
 /**
- *
  * @author mabel
  */
 public class FrmAlquiler extends javax.swing.JFrame {
-    
-    
+
+    // ===== Sesión del usuario =====
+    private final User currentUser;
+
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
 
-    /**
-     * Creates new form FrmAlquiler
-     */
-    
-    
-    
-    
     private DecimalFormat df = new DecimalFormat("#,##0.00");
-    
     double precioPorDia = 0;
     double subtotal = 0;
     double garantia = 0;
@@ -53,113 +38,78 @@ public class FrmAlquiler extends javax.swing.JFrame {
     double descuento = 0;
     double total = 0;
     double precioVehiculo = 0;
-    
-    
-    
+
+    // --- Constructor SIN usuario (evita usarlo en flujo real) ---
     public FrmAlquiler() {
+        this(null);
+    }
+
+    // --- Constructor CON usuario (usar siempre desde el menú) ---
+    public FrmAlquiler(User user) {
+        this.currentUser = user;
         initComponents();
-        
-        txtdias.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                calcularTotales();
-            }
-        });
 
-        txtGara.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                calcularTotales();
-            }
-        });
-      
-        
-        
-        this.setSize(1366, 768); 
-         this.setLocationRelativeTo(null); // Centrar pantalla
+        btnFactura11.setEnabled(false);
+        this.setSize(1366, 768);
+        this.setLocationRelativeTo(null); // Centrar pantalla
+        if (currentUser != null) {
+            setTitle("Alquiler - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
+        }
 
-         
-         
+        // Estilos
         Estilos.aplicarEstiloComboBox(cmbCliente);
         Estilos.aplicarEstiloComboBox(cmbEmpleado);
         Estilos.aplicarEstiloComboBox(cmbVehiculo);
         Estilos.aplicarEstiloComboBox(cmbEstado);
         Estilos.aplicarEstiloComboBox(cmbDescuento);
         Estilos.aplicarEstiloTextField(txtBuscar);
-
-
-        
         Estilos.aplicarEstiloTextField(txtGara);
         Estilos.aplicarEstiloTextField(txtdias);
-        
-        
-
         Estilos.aplicarEstiloTabla(jTable1);
-         
-         
-         
-    // Escalar la imagen al tamaño del JFrame
-    ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Alquiler1.png"));
-    Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
-            this.getWidth(),   
-            this.getHeight(),  
-            Image.SCALE_SMOOTH
-    );
-    lblFondoA.setIcon(new ImageIcon(imagenEscalada));
-    
-    
-    
-    // Cargar combos desde BD
+
+        // Fondo
+        ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Alquiler1.png"));
+        Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(this.getWidth(), this.getHeight(), Image.SCALE_SMOOTH);
+        lblFondoA.setIcon(new ImageIcon(imagenEscalada));
+
+        // Cargar combos desde BD (clsCarga suele crear "id - descripción")
         car.cargarDatos(cmbCliente, "clientes", "idcliente", "CONCAT(nombrecliente,' ',apellidocliente)");
         car.cargarDatos(cmbEmpleado, "empleados", "idempleado", "CONCAT(nombreempleado,' ',apellidoempleado)");
         car.cargarDatos(cmbVehiculo, "vehiculos", "idvehiculo", "modelo");
-        // Ejemplo de cargar el combo estado
-car.cargarDatos(cmbEstado, "estadoalquiler", "idestadoalquiler", "CONCAT(idestadoalquiler,' - ',descripcion)");
+        // Si tu clsCarga NO arma "id - desc", usa esta variante:
+        // car.cargarDatos(cmbVehiculo, "vehiculos", "idvehiculo", "CONCAT(idvehiculo,' - ',modelo)");
+        car.cargarDatos(cmbEstado, "estadoalquiler", "idestadoalquiler", "CONCAT(idestadoalquiler,' - ',descripcion)");
 
-
-        
-        
-     // Cargar descuentos manuales
+        // Descuentos manuales
         cmbDescuento.removeAllItems();
         cmbDescuento.addItem("0 - No aplica");
         cmbDescuento.addItem("1- Promoción");
-        cmbDescuento.addItem("2- Tercera edad");    
-        
-        
-        
+        cmbDescuento.addItem("2- Tercera edad");
 
-        // Mostrar registros
+        // Tabla
         ut.mostrarDatos(sqlse, jTable1, new String[]{
-            "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día", "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
+            "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día",
+            "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
         });
 
-        // Eventos
+        // Eventos de recálculo
+        txtdias.getDocument().addDocumentListener(new SimpleDocListener(this::calcularTotales));
+        txtGara.getDocument().addDocumentListener(new SimpleDocListener(this::calcularTotales));
         cmbVehiculo.addActionListener(e -> cargarPrecioVehiculo());
         cmbDescuento.addActionListener(e -> calcularTotales());
-        // Recalcular cuando se editen los TextFields (días, garantía)
-    addDocumentListenerTo(txtdias);
-    addDocumentListenerTo(txtGara);
-    addRealtimeUpdate(txtdias);
-    addRealtimeUpdate(txtGara);
 
-    // Llamada inicial por si ya hay selección
-    calcularTotales();
-}
+        // Cálculo inicial
+        calcularTotales();
+    }
 
-
-private void addDocumentListenerTo(final javax.swing.JTextField tf) {
-    tf.getDocument().addDocumentListener(new DocumentListener() {
-        public void insertUpdate(DocumentEvent e) { calcularTotales(); }
-        public void removeUpdate(DocumentEvent e) { calcularTotales(); }
-        public void changedUpdate(DocumentEvent e) { calcularTotales(); }
-        
-    });
-}
-
-
-
-
-
-
-
+    // Listener corto
+    private static class SimpleDocListener implements DocumentListener {
+        private final Runnable r;
+        SimpleDocListener(Runnable r){ this.r = r; }
+        public void insertUpdate(DocumentEvent e){ r.run(); }
+        public void removeUpdate(DocumentEvent e){ r.run(); }
+        public void changedUpdate(DocumentEvent e){ r.run(); }
+    }
 
     // Consulta principal
     String sqlse = "SELECT a.idalquiler, " +
@@ -175,90 +125,34 @@ private void addDocumentListenerTo(final javax.swing.JTextField tf) {
 
     // Cargar precio diario según vehículo
     private void cargarPrecioVehiculo() {
-    try {
-        Object sel = cmbVehiculo.getSelectedItem();
-        if (sel == null) return;
+        try {
+            Object sel = cmbVehiculo.getSelectedItem();
+            if (sel == null) return;
 
-        
-        String item = sel.toString();
-        int idVehiculo = Integer.parseInt(item.split(" - ")[0].trim());
+            String item = sel.toString();
+            int idVehiculo = Integer.parseInt(item.split(" - ")[0].trim());
 
-        // Consulta SQL
-        String sql = "SELECT precio, kilometraje FROM vehiculos WHERE idvehiculo=" + idVehiculo;
-        Statement st = cn.createStatement();
-        ResultSet rs = st.executeQuery(sql);
+            String sql = "SELECT precio, kilometraje FROM vehiculos WHERE idvehiculo=" + idVehiculo;
+            Statement st = cn.createStatement();
+            ResultSet rs = st.executeQuery(sql);
 
-        if (rs.next()) {
-            // Leer precio y limpiar comas o símbolos
-            String sPrecio = rs.getString("precio").replace(",", "").trim();
+            if (rs.next()) {
+                String sPrecio = rs.getString("precio").replace(",", "").trim();
+                precioVehiculo = Double.parseDouble(sPrecio);
+                precioPorDia = precioVehiculo * 0.05;
 
-            // Convertir correctamente a número
-            precioVehiculo = Double.parseDouble(sPrecio);
+                lblPrecio.setText(String.format("%.2f", precioPorDia));
 
-           
-            precioPorDia = precioVehiculo * 0.05;
+                int km = rs.getInt("kilometraje");
+                lblkilo.setText(String.valueOf(km));
 
-            // Mostrar formateado
-            lblPrecio.setText(String.format("%.2f", precioPorDia));
-
-            
-            
-            int km = rs.getInt("kilometraje");
-            lblkilo.setText(String.valueOf(km));
-            
-            // Recalcular totales
-            calcularTotales();
+                calcularTotales();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Error al cargar precio: " + ex.getMessage());
         }
-    } catch (Exception ex) {
-        JOptionPane.showMessageDialog(null, "Error al cargar precio: " + ex.getMessage());
-    }
-}
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    private double parsePercentageFromCombo(Object item) {
-    if (item == null) return 0;
-    String s = item.toString();
-    
-    try {
-        String[] parts = s.split("-");
-        String numPart = parts[0].trim().replace("%", "").replaceAll("[^0-9.]", "");
-        if (!numPart.isEmpty()) return Double.parseDouble(numPart);
-    } catch (Exception ex) {
-        
-    }
-    s = s.toLowerCase();
-    if (s.contains("promoc")) return 10;
-    if (s.contains("tercera")) return 15;
-    return 0;
-}
-
-    
-    
-    
-    private void addRealtimeUpdate(final javax.swing.JTextField textField) {
-        textField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) { calcularTotales(); }
-            @Override
-            public void removeUpdate(DocumentEvent e) { calcularTotales(); }
-            @Override
-            public void changedUpdate(DocumentEvent e) { calcularTotales(); }
-        });
     }
 
-
-
-       
-    
-    
     // Calcular subtotal, ISV, descuento y total
     private void calcularTotales() {
         try {
@@ -270,132 +164,113 @@ private void addDocumentListenerTo(final javax.swing.JTextField tf) {
             subtotal = precioPorDia * dias;
             garantia = txtGara.getText().isEmpty() ? 0 : Double.parseDouble(txtGara.getText());
 
-            
-            
-            
-String itemD = cmbDescuento.getSelectedItem() != null 
-        ? cmbDescuento.getSelectedItem().toString() 
-        : "0 - No aplica";
+            String itemD = (cmbDescuento.getSelectedItem() != null)
+                    ? cmbDescuento.getSelectedItem().toString()
+                    : "0 - No aplica";
 
-double porcentajeDesc = 0.0;
+            double porcentajeDesc;
+            if (itemD.contains("No aplica")) porcentajeDesc = 0;
+            else if (itemD.toLowerCase().contains("prom")) porcentajeDesc = 10;
+            else if (itemD.toLowerCase().contains("tercera")) porcentajeDesc = 15;
+            else porcentajeDesc = 0;
 
-// Mapear la opción a su porcentaje real
-if (itemD.contains("No aplica")) {
-    porcentajeDesc = 0;
-} else if (itemD.toLowerCase().contains("promoción")) {
-    porcentajeDesc = 10;  // 10% para promoción
-} else if (itemD.toLowerCase().contains("tercera")) {
-    porcentajeDesc = 15;  // 15% para tercera edad
-}
-
-// Calcular descuento real
-descuento = (subtotal * porcentajeDesc) / 100;
-
-
-            isv = subtotal * 0.15; // 15% de ISV
+            descuento = (subtotal * porcentajeDesc) / 100.0;
+            isv = subtotal * 0.15;
             total = subtotal + isv - garantia - descuento;
 
-            // Mostrar valores
             lblSubtotal.setText(String.format("%.2f", subtotal));
             lblISV.setText(String.format("%.2f", isv));
             lblTotal.setText(String.format("%.2f", total));
-        } catch (Exception e) {
-            
-        }
+        } catch (Exception ignored) { }
     }
+    
+    public int obtenerUltimoIdVenta() {
+        int idAlqui = 0;
+        String sql = "SELECT MAX(idalquiler) AS id FROM alquiler";
 
-    
-    
+        try (Connection cn = new clsConexion().Sql_Conexion();
+                
+             Statement st = cn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
 
+            if (rs.next()) {
+                idAlqui = rs.getInt("id");
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al obtener último ID de alquiler: " + e.getMessage());
+        }
+
+        return idAlqui;
+    }
     
-    
-    
-    
-    
+    private int idAlqui;
 
     private void registrar() {
-      try {  
-        String itemC = cmbCliente.getSelectedItem().toString();
-        int idC = Integer.parseInt(itemC.split(" - ")[0]);
+        try {
+            String itemC = cmbCliente.getSelectedItem().toString();
+            int idC = Integer.parseInt(itemC.split(" - ")[0].trim());
 
-        String itemE = cmbEmpleado.getSelectedItem().toString();
-        int idE = Integer.parseInt(itemE.split(" - ")[0]);
+            String itemE = cmbEmpleado.getSelectedItem().toString();
+            int idE = Integer.parseInt(itemE.split(" - ")[0].trim());
 
-        String itemV = cmbVehiculo.getSelectedItem().toString();
-        int idV = Integer.parseInt(itemV.split(" - ")[0]);
+            String itemV = cmbVehiculo.getSelectedItem().toString();
+            int idV = Integer.parseInt(itemV.split(" - ")[0].trim());
 
-        // Registrar alquiler
-String itemEA = cmbEstado.getSelectedItem().toString();
-int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
+            String itemEA = cmbEstado.getSelectedItem().toString();
+            int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
 
+            String sql = "INSERT INTO alquiler (idcliente, idempleado, idvehiculo, fechainicio, totaldias, " +
+                    "preciopordia, subtotal, garantia, isv, descuentoalquiler, totalpagar, kilometrajeinicial, idestadoalquiler) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        String sql = "INSERT INTO alquiler (idcliente, idempleado, idvehiculo, fechainicio, totaldias, preciopordia, subtotal, garantia, isv, descuentoalquiler, totalpagar, kilometrajeinicial, idestadoalquiler) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            Object[] parametros = {
+                    idC,
+                    idE,
+                    idV,
+                    new java.sql.Date(jDateInicio.getDate().getTime()),
+                    Integer.parseInt(txtdias.getText()),
+                    precioPorDia,
+                    subtotal,
+                    txtGara.getText().isEmpty() ? 0 : Double.parseDouble(txtGara.getText()),
+                    isv,
+                    descuento,
+                    total,
+                    Integer.parseInt(lblkilo.getText()),
+                    idEA
+            };
 
-        Object[] parametros = {
-            idC,
-            idE,
-            idV,
-            new java.sql.Date(jDateInicio.getDate().getTime()),
-            Integer.parseInt(txtdias.getText()),
-            precioPorDia,
-            subtotal,
-            Double.parseDouble(txtGara.getText()),
-            isv,
-            descuento,
-            total,
-            Integer.parseInt(lblkilo.getText()),
-            idEA
-        };
-
-        if (ut.ejecutarActualizacion(sql, parametros)) {
-            JOptionPane.showMessageDialog(null, "Alquiler registrado correctamente.");
-            ut.mostrarDatos(sqlse, jTable1, new String[]{
-                "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día", "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
-            });
-        }
-        }catch (Exception ex) {
+            if (ut.ejecutarActualizacion(sql, parametros)) {
+                JOptionPane.showMessageDialog(null, "Alquiler registrado correctamente.");
+                ut.mostrarDatos(sqlse, jTable1, new String[]{
+                        "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día",
+                        "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
+                });
+                
+            idAlqui = obtenerUltimoIdVenta();
+            btnFactura11.setEnabled(true);
+            }
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, "Error al registrar alquiler: " + ex.getMessage());
         }
     }
-    
-    
-    
 
-    
-    
     private void seleccionarAlquiler() {
-    int fila = jTable1.getSelectedRow();
+        int fila = jTable1.getSelectedRow();
+        if (fila == -1) return;
 
-    if (fila != -1) {
-        // Cliente
         String clienteTabla = jTable1.getValueAt(fila, 1).toString();
-        for (int i = 0; i < cmbCliente.getItemCount(); i++) {
-            if (cmbCliente.getItemAt(i).contains(clienteTabla)) {
-                cmbCliente.setSelectedIndex(i);
-                break;
-            }
-        }
+        for (int i = 0; i < cmbCliente.getItemCount(); i++)
+            if (cmbCliente.getItemAt(i).contains(clienteTabla)) { cmbCliente.setSelectedIndex(i); break; }
 
-        // Empleado
         String empleadoTabla = jTable1.getValueAt(fila, 2).toString();
-        for (int i = 0; i < cmbEmpleado.getItemCount(); i++) {
-            if (cmbEmpleado.getItemAt(i).contains(empleadoTabla)) {
-                cmbEmpleado.setSelectedIndex(i);
-                break;
-            }
-        }
+        for (int i = 0; i < cmbEmpleado.getItemCount(); i++)
+            if (cmbEmpleado.getItemAt(i).contains(empleadoTabla)) { cmbEmpleado.setSelectedIndex(i); break; }
 
-        // Vehículo
         String vehiculoTabla = jTable1.getValueAt(fila, 3).toString();
-        for (int i = 0; i < cmbVehiculo.getItemCount(); i++) {
-            if (cmbVehiculo.getItemAt(i).contains(vehiculoTabla)) {
-                cmbVehiculo.setSelectedIndex(i);
-                break;
-            }
-        }
+        for (int i = 0; i < cmbVehiculo.getItemCount(); i++)
+            if (cmbVehiculo.getItemAt(i).contains(vehiculoTabla)) { cmbVehiculo.setSelectedIndex(i); break; }
 
-        // Fecha inicio
         try {
             java.util.Date fecha = java.sql.Date.valueOf(jTable1.getValueAt(fila, 4).toString());
             jDateInicio.setDate(fecha);
@@ -403,135 +278,86 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
             jDateInicio.setDate(null);
         }
 
-        // Días
         txtdias.setText(jTable1.getValueAt(fila, 5).toString());
-
-        // Precio por día
         lblPrecio.setText(jTable1.getValueAt(fila, 6).toString());
-
-        // Subtotal
         lblSubtotal.setText(jTable1.getValueAt(fila, 7).toString());
-
-        // Garantía
         txtGara.setText(jTable1.getValueAt(fila, 8).toString());
-
-        // ISV
         lblISV.setText(jTable1.getValueAt(fila, 9).toString());
 
-        // Descuento
         double valorDesc = 0;
-        try {
-            valorDesc = Double.parseDouble(jTable1.getValueAt(fila, 10).toString());
-        } catch (Exception e) { }
-        switch ((int) valorDesc) {
-            case 0:
-                cmbDescuento.setSelectedIndex(0); // "0 - No aplica"
-                break;
-            case 10:
-                cmbDescuento.setSelectedIndex(1); // "1- Promoción"
-                break;
-            case 15:
-                cmbDescuento.setSelectedIndex(2); // "2- Tercera edad"
-                break;
-            default:
-                cmbDescuento.setSelectedIndex(0);
-                break;
-        }
+        try { valorDesc = Double.parseDouble(jTable1.getValueAt(fila, 10).toString()); } catch (Exception ignored) {}
+        if (valorDesc == 10) cmbDescuento.setSelectedIndex(1);
+        else if (valorDesc == 15) cmbDescuento.setSelectedIndex(2);
+        else cmbDescuento.setSelectedIndex(0);
 
-        // Total
         lblTotal.setText(jTable1.getValueAt(fila, 11).toString());
-
-        // Kilometraje inicial
         lblkilo.setText(jTable1.getValueAt(fila, 12).toString());
 
-        // Estado del alquiler
+        // Estado (si el combo está en formato "id - desc", hacemos contains)
         String estado = jTable1.getValueAt(fila, 13).toString();
-        cmbEstado.setSelectedItem(estado);
+        for (int i=0;i<cmbEstado.getItemCount();i++)
+            if (cmbEstado.getItemAt(i).toString().toLowerCase().contains(estado.toLowerCase())) {
+                cmbEstado.setSelectedIndex(i); break;
+            }
 
-        // Recalcular totales por seguridad
         calcularTotales();
+        String id = jTable1.getValueAt(fila, 0).toString(); // idventa
+            
+            
+            idAlqui = Integer.parseInt(id);
+            btnFactura11.setEnabled(true);
+            
+            
     }
-}
 
-
-
-
-    
-    
-    
-    
-   
-
-
- 
-    
-    
     private void editarAlquiler() {
-    int filaSeleccionada = jTable1.getSelectedRow();
-
-    if (filaSeleccionada == -1) {
-        JOptionPane.showMessageDialog(null, "Seleccione un alquiler para editar.");
-        return;
-    }
-
-    int idAlquiler = Integer.parseInt(jTable1.getValueAt(filaSeleccionada, 0).toString());
-
-    try {
-        // Obtener los IDs reales desde los ComboBox
-        String itemC = cmbCliente.getSelectedItem().toString();
-        int idC = Integer.parseInt(itemC.split(" - ")[0].trim());
-
-        String itemE = cmbEmpleado.getSelectedItem().toString();
-        int idE = Integer.parseInt(itemE.split(" - ")[0].trim());
-
-        String itemV = cmbVehiculo.getSelectedItem().toString();
-        int idV = Integer.parseInt(itemV.split(" - ")[0].trim());
-
-        // ✅ Obtener id del estado directamente del combo
-        String itemEA = cmbEstado.getSelectedItem().toString();
-        int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
-
-        // --- Consulta para actualizar alquiler ---
-        String sql = "UPDATE alquiler SET idcliente=?, idempleado=?, idvehiculo=?, fechainicio=?, totaldias=?, "
-                + "preciopordia=?, subtotal=?, garantia=?, isv=?, descuentoalquiler=?, totalpagar=?, kilometrajeinicial=?, idestadoalquiler=? "
-                + "WHERE idalquiler=?";
-
-        Object[] parametros = {
-            idC,
-            idE,
-            idV,
-            new java.sql.Date(jDateInicio.getDate().getTime()),
-            Integer.parseInt(txtdias.getText()),
-            precioPorDia,
-            subtotal,
-            txtGara.getText().isEmpty() ? 0 : Double.parseDouble(txtGara.getText()),
-            isv,
-            descuento,
-            total,
-            Integer.parseInt(lblkilo.getText()),
-            idEA,
-            idAlquiler
-        };
-
-        if (ut.ejecutarActualizacion(sql, parametros)) {
-            JOptionPane.showMessageDialog(null, "Alquiler actualizado correctamente.");
-            ut.mostrarDatos(sqlse, jTable1, new String[]{
-                "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día", "Subtotal",
-                "Garantía", "ISV", "Descuento", "Total", "Estado"
-            });
+        int filaSeleccionada = jTable1.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(null, "Seleccione un alquiler para editar.");
+            return;
         }
 
-    } catch (Exception ex) {
-        JOptionPane.showMessageDialog(null, "Error al editar alquiler: " + ex.getMessage());
+        int idAlquiler = Integer.parseInt(jTable1.getValueAt(filaSeleccionada, 0).toString());
+        try {
+            String itemC = cmbCliente.getSelectedItem().toString();
+            int idC = Integer.parseInt(itemC.split(" - ")[0].trim());
+
+            String itemE = cmbEmpleado.getSelectedItem().toString();
+            int idE = Integer.parseInt(itemE.split(" - ")[0].trim());
+
+            String itemV = cmbVehiculo.getSelectedItem().toString();
+            int idV = Integer.parseInt(itemV.split(" - ")[0].trim());
+
+            String itemEA = cmbEstado.getSelectedItem().toString();
+            int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
+
+            String sql = "UPDATE alquiler SET idcliente=?, idempleado=?, idvehiculo=?, fechainicio=?, totaldias=?, " +
+                    "preciopordia=?, subtotal=?, garantia=?, isv=?, descuentoalquiler=?, totalpagar=?, kilometrajeinicial=?, idestadoalquiler=? " +
+                    "WHERE idalquiler=?";
+
+            Object[] parametros = {
+                    idC, idE, idV,
+                    new java.sql.Date(jDateInicio.getDate().getTime()),
+                    Integer.parseInt(txtdias.getText()),
+                    precioPorDia, subtotal,
+                    txtGara.getText().isEmpty() ? 0 : Double.parseDouble(txtGara.getText()),
+                    isv, descuento, total,
+                    Integer.parseInt(lblkilo.getText()),
+                    idEA, idAlquiler
+            };
+
+            if (ut.ejecutarActualizacion(sql, parametros)) {
+                JOptionPane.showMessageDialog(null, "Alquiler actualizado correctamente.");
+                ut.mostrarDatos(sqlse, jTable1, new String[]{
+                        "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día",
+                        "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
+                });
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Error al editar alquiler: " + ex.getMessage());
+        }
     }
-}
-
-
-
-
-
-    
-    
+ 
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -559,6 +385,7 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
         jLabel6 = new javax.swing.JLabel();
         txtBuscar = new javax.swing.JTextField();
         jLabel17 = new javax.swing.JLabel();
+        btnFactura11 = new javax.swing.JLabel();
         btnRegistrar = new javax.swing.JLabel();
         btnEditar = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
@@ -635,10 +462,10 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
             }
         });
         txtGara.addInputMethodListener(new java.awt.event.InputMethodListener() {
-            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
-            }
             public void inputMethodTextChanged(java.awt.event.InputMethodEvent evt) {
                 txtGaraInputMethodTextChanged(evt);
+            }
+            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
             }
         });
         txtGara.addActionListener(new java.awt.event.ActionListener() {
@@ -701,13 +528,21 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
         jLabel17.setText("jLabel17");
         getContentPane().add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(1120, 80, 140, 90));
 
+        btnFactura11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura.png"))); // NOI18N
+        btnFactura11.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnFactura11MouseClicked(evt);
+            }
+        });
+        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 670, -1, 70));
+
         btnRegistrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Regi.png"))); // NOI18N
         btnRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 btnRegistrarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 590, -1, -1));
+        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 600, -1, -1));
 
         btnEditar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Editar.png"))); // NOI18N
         btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -715,7 +550,7 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
                 btnEditarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(970, 590, -1, -1));
+        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 600, -1, -1));
 
         jLabel9.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(255, 255, 255));
@@ -800,7 +635,7 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();   
+        FrmMenu menu = new FrmMenu(currentUser);   
         menu.setVisible(true);          
         dispose(); 
     }//GEN-LAST:event_lblRegresarMouseClicked
@@ -845,15 +680,17 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
         seleccionarAlquiler();
     }//GEN-LAST:event_jTable1MouseClicked
 
+    private void btnFactura11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnFactura11MouseClicked
+
+        FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idAlqui);
+        menu.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnFactura11MouseClicked
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -861,27 +698,15 @@ int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FrmAlquiler.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FrmAlquiler.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FrmAlquiler.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(FrmAlquiler.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FrmAlquiler().setVisible(true);
-            }
-        });
+        java.awt.EventQueue.invokeLater(() -> new FrmAlquiler().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel btnEditar;
+    private javax.swing.JLabel btnFactura11;
     private javax.swing.JLabel btnRegistrar;
     private javax.swing.JComboBox<String> cmbCliente;
     private javax.swing.JComboBox<String> cmbDescuento;

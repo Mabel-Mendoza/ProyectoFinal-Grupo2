@@ -8,6 +8,8 @@ import clases.Estilos;
 import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
+import clases.User;
+
 import java.awt.Image;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -22,7 +24,7 @@ import javax.swing.JOptionPane;
  */
 public class FrmEmpleados extends javax.swing.JFrame {
     
-    
+    private final User currentUser;
     
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
@@ -32,10 +34,16 @@ public class FrmEmpleados extends javax.swing.JFrame {
     /**
      * Creates new form FrmEmpleados
      */
-    public FrmEmpleados() {
+    public FrmEmpleados(User user) {
+        
+        this.currentUser = user;
+        
+
+        if (currentUser != null) {
+            setTitle("Clientes - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
+        }
+        
         initComponents();
-        
-        
         Estilos.aplicarEstiloTabla(jTable1);
     
         Estilos.aplicarEstiloTextField(txtnombre);
@@ -277,7 +285,6 @@ public class FrmEmpleados extends javax.swing.JFrame {
     }
     return id;
 }
-
     
     
     
@@ -374,6 +381,11 @@ public class FrmEmpleados extends javax.swing.JFrame {
         getContentPane().add(cmbJornada, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 560, 230, -1));
 
         cmbPuesto.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbPuesto.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbPuestoActionPerformed(evt);
+            }
+        });
         getContentPane().add(cmbPuesto, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 510, 230, -1));
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
@@ -528,7 +540,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
     }//GEN-LAST:event_txtDireccionActionPerformed
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();   
+        FrmMenu menu = new FrmMenu(currentUser);   
         menu.setVisible(true);          
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
@@ -555,15 +567,14 @@ public class FrmEmpleados extends javax.swing.JFrame {
         seleccion();
     }//GEN-LAST:event_jTable1MouseClicked
 
+    private void cmbPuestoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbPuestoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbPuestoActionPerformed
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -571,22 +582,11 @@ public class FrmEmpleados extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FrmEmpleados.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FrmEmpleados.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FrmEmpleados.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(FrmEmpleados.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(FrmClientes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FrmEmpleados().setVisible(true);
-            }
+            public void run() { new FrmClientes().setVisible(true); }
         });
     }
 

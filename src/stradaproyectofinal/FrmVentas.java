@@ -5,6 +5,7 @@
 package stradaproyectofinal;
 
 import clases.Estilos;
+import clases.User;
 import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
@@ -22,6 +23,9 @@ import javax.swing.JOptionPane;
  * @author mabel
  */
 public class FrmVentas extends javax.swing.JFrame {
+    
+        private final User currentUser;
+
 
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
@@ -36,9 +40,17 @@ public class FrmVentas extends javax.swing.JFrame {
     
     
     
-    public FrmVentas() {
-        initComponents();
+    public FrmVentas(User user) {
         
+        this.currentUser = user;
+        this.setSize(1366, 768);
+        this.setLocationRelativeTo(null); // Centrar pantalla
+        if (currentUser != null) {
+            setTitle("Alquiler - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
+        }
+        
+        initComponents();
+        btnFactura11.setEnabled(false);
         this.setSize(1366, 768); 
          this.setLocationRelativeTo(null); // Centrar pantalla
          
@@ -53,19 +65,16 @@ public class FrmVentas extends javax.swing.JFrame {
 
         Estilos.aplicarEstiloTextField(txtBuscar);
 
-    // Escalar la imagen al tamaño del JFrame
-    ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Ventas1.png"));
-    Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
-            this.getWidth(),   
-            this.getHeight(),  
-            Image.SCALE_SMOOTH
-    );
-    lblFondoV.setIcon(new ImageIcon(imagenEscalada));
+        // Escalar la imagen al tamaño del JFrame
+        ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Ventas1.png"));
+        Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
+                this.getWidth(),   
+                this.getHeight(),  
+                Image.SCALE_SMOOTH
+        );
+        lblFondoV.setIcon(new ImageIcon(imagenEscalada));
     
-    
-    
-    
-    // Llenar combos desde la BD
+        // Llenar combos desde la BD
         car.cargarDatos(cmbCliente, "clientes", "idcliente", "CONCAT(nombrecliente, ' ', apellidocliente)");
         car.cargarDatos(cmbEmpleado, "empleados", "idempleado", "CONCAT(nombreempleado, ' ', apellidoempleado)");
         car.cargarDatos(cmbVehiculo, "vehiculos", "idvehiculo", "modelo");
@@ -134,6 +143,28 @@ public class FrmVentas extends javax.swing.JFrame {
         lblISV.setText(String.valueOf(isv));
         lblTotal.setText(String.valueOf(total));
     }
+    
+    public int obtenerUltimoIdVenta() {
+        int idVenta = 0;
+        String sql = "SELECT MAX(idventa) AS id FROM ventas";
+
+        try (Connection cn = new clsConexion().Sql_Conexion();
+                
+             Statement st = cn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
+            if (rs.next()) {
+                idVenta = rs.getInt("id");
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al obtener último ID de venta: " + e.getMessage());
+        }
+
+        return idVenta;
+    }
+    
+    private int idVent;
 
     private void registrar() {
         String itemC = cmbCliente.getSelectedItem().toString();
@@ -168,6 +199,10 @@ public class FrmVentas extends javax.swing.JFrame {
             ut.mostrarDatos(sqlse, jTable1, new String[]{
                 "ID", "Cliente", "Empleado", "Vehículo", "Fecha", "Precio", "Descuento", "ISV", "Total", "Estado"
             });
+            
+            
+            idVent = obtenerUltimoIdVenta();
+            btnFactura11.setEnabled(true);
         }
     }
     
@@ -258,6 +293,11 @@ public class FrmVentas extends javax.swing.JFrame {
 
             // Recalcular por seguridad
             calcularTotales();
+            String id = jTable1.getValueAt(fila, 0).toString(); // idventa
+            
+            
+            idVent = Integer.parseInt(id);
+            btnFactura11.setEnabled(true);
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error al seleccionar venta: " + e.getMessage());
@@ -309,6 +349,8 @@ public class FrmVentas extends javax.swing.JFrame {
             ut.mostrarDatos(sqlse, jTable1, new String[]{
                 "ID", "Cliente", "Empleado", "Vehículo", "Fecha", "Precio", "Descuento", "ISV", "Total", "Estado"
             });
+            
+            
         }
     }
 
@@ -515,7 +557,7 @@ public class FrmVentas extends javax.swing.JFrame {
     }//GEN-LAST:event_cmbEmpleadoActionPerformed
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();   
+        FrmMenu menu = new FrmMenu(currentUser);   
         menu.setVisible(true);          
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
@@ -530,7 +572,7 @@ public class FrmVentas extends javax.swing.JFrame {
 
     private void btnFactura11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnFactura11MouseClicked
        
-       FrmFacturaVenta menu = new FrmFacturaVenta();   
+       FrmFacturaVenta menu = new FrmFacturaVenta(idVent);   
         menu.setVisible(true);          
         dispose();
     }//GEN-LAST:event_btnFactura11MouseClicked
@@ -543,11 +585,6 @@ public class FrmVentas extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -555,23 +592,10 @@ public class FrmVentas extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FrmVentas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FrmVentas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FrmVentas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(FrmVentas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(FrmAlquiler.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FrmVentas().setVisible(true);
-            }
-        });
+        java.awt.EventQueue.invokeLater(() -> new FrmAlquiler().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

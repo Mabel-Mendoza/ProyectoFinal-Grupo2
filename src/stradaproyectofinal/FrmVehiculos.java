@@ -1,39 +1,39 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package stradaproyectofinal;
 
 import clases.Estilos;
 import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
+import clases.User;                  // <-- IMPORTANTE
+
 import java.awt.Image;
 import java.sql.Connection;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author mabel
- */
 public class FrmVehiculos extends javax.swing.JFrame {
     
+    // ==== NUEVO: guardamos quién está logueado ====
+    private final User currentUser;
+
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
 
-    /**
-     * Creates new form FrmVehiculos
-     */
+    // ==== Constructor SIN usuario (si alguien lo usa por error, no hay sesión) ====
     public FrmVehiculos() {
+        this(null);
+    }
+
+    // ==== Constructor CON usuario (el recomendado desde el menú) ====
+    public FrmVehiculos(User user) {
+        this.currentUser = user;           // guardamos la sesión
         initComponents();
-        
+
         this.setSize(1366, 768); 
-         this.setLocationRelativeTo(null); // Centrar pantalla
-         
-         
+        this.setLocationRelativeTo(null); // Centrar pantalla
+
         Estilos.aplicarEstiloTextField(TxtPlaca);
         Estilos.aplicarEstiloTextField(TxtMarca);
         Estilos.aplicarEstiloTextField(TxtColor);
@@ -43,38 +43,38 @@ public class FrmVehiculos extends javax.swing.JFrame {
         Estilos.aplicarEstiloTextField(TxtKilometraje);
         Estilos.aplicarEstiloTextField(txtBuscar);
 
-
-
-
         Estilos.aplicarEstiloComboBox(CmbVehiculo);
         Estilos.aplicarEstiloComboBox(CmbEstado);
         Estilos.aplicarEstiloComboBox(CmbProveedor);
     
-    
-    
-    Estilos.aplicarEstiloTabla(jTable1);
+        Estilos.aplicarEstiloTabla(jTable1);
 
-    // Escalar la imagen al tamaño del JFrame
-    ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Vehi1.png"));
-    Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
-            this.getWidth(),   
-            this.getHeight(),  
-            Image.SCALE_SMOOTH
-    );
-    lblFondoV.setIcon(new ImageIcon(imagenEscalada));
-      car.cargarDatos(CmbVehiculo,"tipovehiculo","idtipovehiculo","descripcion");
+        // Escalar la imagen al tamaño del JFrame
+        ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Vehi1.png"));
+        Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
+                this.getWidth(),   
+                this.getHeight(),  
+                Image.SCALE_SMOOTH
+        );
+        lblFondoV.setIcon(new ImageIcon(imagenEscalada));
+
+        car.cargarDatos(CmbVehiculo,"tipovehiculo","idtipovehiculo","descripcion");
         car.cargarDatos(CmbEstado,"estadovehiculo","idestadovehiculo","descripcion");
         car.cargarDatos(CmbProveedor,"proveedores","idproveedor","nombreproveedor");
 
         ut.mostrarDatos(sqlse, jTable1, new String[]{
             "ID", "Placa", "Año", "Marca", "Color", "Precio", "Modelo", "No. Serie", "Kilometraje", "Proveedor", "Tipo", "Estado"
         });
+
+        // Opcional: muestra quién es en el título
+        if (currentUser != null) {
+            setTitle("Vehículos - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
+        }
     }
     
     private void limpiar(){
-        
         TxtPlaca.setText("");
-        spinyear.setYear(java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)); // vuelve al año actual
+        spinyear.setYear(java.util.Calendar.getInstance().get(java.util.Calendar.YEAR));
         TxtMarca.setText("");
         TxtColor.setText("");
         TxtPrecio.setText("");
@@ -85,7 +85,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
         if (CmbVehiculo.getItemCount() > 0) CmbVehiculo.setSelectedIndex(0);
         if (CmbEstado.getItemCount() > 0) CmbEstado.setSelectedIndex(0);
         jTable1.clearSelection();
-    };
+    }
     
     String sqlse = "SELECT v.idvehiculo, v.placa, v.anio, v.marca, "
            + "v.color, v.precio, v.modelo, v.noserie, v.kilometraje, "
@@ -97,13 +97,10 @@ public class FrmVehiculos extends javax.swing.JFrame {
            + "JOIN estadovehiculo e ON v.idestadovehiculo = e.idestadovehiculo";
     
     private void registrar() {
-        
         String item = CmbProveedor.getSelectedItem().toString(); 
         int idP = Integer.parseInt(item.split(" - ")[0]); 
-        
         String ite = CmbVehiculo.getSelectedItem().toString();
         int idT = Integer.parseInt(ite.split(" - ")[0]);
-        
         String it = CmbEstado.getSelectedItem().toString();
         int idE = Integer.parseInt(it.split(" - ")[0]);
                 
@@ -111,50 +108,31 @@ public class FrmVehiculos extends javax.swing.JFrame {
                    + "(placa, anio, marca, color, precio, modelo, noserie, kilometraje, idproveedor, idtipovehiculo, idestadovehiculo) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            Object[] parametros = {
-                TxtPlaca.getText(),
-                spinyear.getYear(),
-                TxtMarca.getText(),
-                TxtColor.getText(),
-                TxtPrecio.getText(),
-                TxtModelo.getText(),
-                TxtSerie.getText(),
-                TxtKilometraje.getText(),
-                idP,
-                idT,
-                idE
+        Object[] parametros = {
+            TxtPlaca.getText(), spinyear.getYear(), TxtMarca.getText(), TxtColor.getText(),
+            TxtPrecio.getText(), TxtModelo.getText(), TxtSerie.getText(), TxtKilometraje.getText(),
+            idP, idT, idE
+        };
 
-            };
-
-        // 4. Ejecutar la inserción
-            if(ut.ejecutarActualizacion(sql, parametros)) {
-                JOptionPane.showMessageDialog(null, "Vehiculo registrado correctamente.");
-                // 5. Limpiar campos
-               // limpiarCampos();
-                // 6. Actualizar tabla
-
-                ut.mostrarDatos(sqlse, jTable1, 
-                    new String[]{"ID", "Placa", "Anio", "Marca", "Color", "Precio", "Modelo", "No Serie", "Kilometraje", "Proveedor", "Tipo", "Estado"});
-            }
+        if(ut.ejecutarActualizacion(sql, parametros)) {
+            JOptionPane.showMessageDialog(null, "Vehiculo registrado correctamente.");
+            ut.mostrarDatos(sqlse, jTable1, 
+                new String[]{"ID", "Placa", "Anio", "Marca", "Color", "Precio", "Modelo", "No Serie", "Kilometraje", "Proveedor", "Tipo", "Estado"});
+        }
     }
     
     private void editar() {
-        
         int filaSeleccionada = jTable1.getSelectedRow();
-
         if(filaSeleccionada == -1){
             JOptionPane.showMessageDialog(null, "Seleccione un vehiculo para editar.");
             return;
         }
-
         int idvehiculo = Integer.parseInt(jTable1.getValueAt(filaSeleccionada, 0).toString());
 
         String item = CmbProveedor.getSelectedItem().toString(); 
         int idP = Integer.parseInt(item.split(" - ")[0]);
-        
         String ite = CmbVehiculo.getSelectedItem().toString();
         int idT = Integer.parseInt(ite.split(" - ")[0]);
-        
         String it = CmbEstado.getSelectedItem().toString();
         int idE = Integer.parseInt(it.split(" - ")[0]);
 
@@ -162,23 +140,13 @@ public class FrmVehiculos extends javax.swing.JFrame {
                    + "WHERE idvehiculo=?";
 
         Object[] parametros = {
-                TxtPlaca.getText(),
-                spinyear.getYear(),
-                TxtMarca.getText(),
-                TxtColor.getText(),
-                TxtPrecio.getText(),
-                TxtModelo.getText(),
-                TxtSerie.getText(),
-                TxtKilometraje.getText(),
-                idP,
-                idT,
-                idE,
-                idvehiculo  
+            TxtPlaca.getText(), spinyear.getYear(), TxtMarca.getText(), TxtColor.getText(),
+            TxtPrecio.getText(), TxtModelo.getText(), TxtSerie.getText(), TxtKilometraje.getText(),
+            idP, idT, idE, idvehiculo  
         };
 
         if(ut.ejecutarActualizacion(sql, parametros)){
             JOptionPane.showMessageDialog(null, "Datos del vehiculo actualizado correctamente.");
-            
             ut.mostrarDatos(sqlse, jTable1, new String[]{
                 "ID", "Placa", "Anio", "Marca", "Color", "Precio", "Modelo", "No Serie", "Kilometraje", "Proveedor", "Tipo", "Estado"
             });
@@ -187,8 +155,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
     
     private void seleccion() {
        int fila = jTable1.getSelectedRow();
-
-        if(fila != -1){
+       if(fila != -1){
             TxtPlaca.setText(jTable1.getValueAt(fila, 1).toString());
             spinyear.setYear(Integer.parseInt(jTable1.getValueAt(fila, 2).toString().substring(0, 4)));
             TxtMarca.setText(jTable1.getValueAt(fila, 3).toString());
@@ -197,35 +164,13 @@ public class FrmVehiculos extends javax.swing.JFrame {
             TxtModelo.setText(jTable1.getValueAt(fila, 6).toString());
             TxtSerie.setText(jTable1.getValueAt(fila, 7).toString());
             TxtKilometraje.setText(jTable1.getValueAt(fila, 8).toString());
-
             String descP = jTable1.getValueAt(fila, 9).toString();
-            for(int i = 0; i < CmbProveedor.getItemCount(); i++){
-                if(CmbProveedor.getItemAt(i).contains(descP)){
-                    CmbProveedor.setSelectedIndex(i);
-                    break;
-                }
-            }
-            
+            for(int i=0;i<CmbProveedor.getItemCount();i++) if(CmbProveedor.getItemAt(i).contains(descP)) { CmbProveedor.setSelectedIndex(i); break; }
             String descT = jTable1.getValueAt(fila, 10).toString();
-            for(int i = 0; i < CmbVehiculo.getItemCount(); i++){
-                if(CmbVehiculo.getItemAt(i).contains(descT)){
-                    CmbVehiculo.setSelectedIndex(i);
-                    break;
-                }
-            }
-            
+            for(int i=0;i<CmbVehiculo.getItemCount();i++) if(CmbVehiculo.getItemAt(i).contains(descT)) { CmbVehiculo.setSelectedIndex(i); break; }
             String descE = jTable1.getValueAt(fila, 11).toString();
-            for(int i = 0; i < CmbEstado.getItemCount(); i++){
-                if(CmbEstado.getItemAt(i).contains(descE)){
-                    CmbEstado.setSelectedIndex(i);
-                    break;
-                }
-            }
-        }  
-        
-        
-    
-
+            for(int i=0;i<CmbEstado.getItemCount();i++) if(CmbEstado.getItemAt(i).contains(descE)) { CmbEstado.setSelectedIndex(i); break; }
+       }
     }
 
     
@@ -460,8 +405,8 @@ public class FrmVehiculos extends javax.swing.JFrame {
     }//GEN-LAST:event_TxtMarcaActionPerformed
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-       FrmMenu menu = new FrmMenu();   
-        menu.setVisible(true);          
+       FrmMenu menu = new FrmMenu(currentUser);
+        menu.setVisible(true);
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
 
@@ -480,12 +425,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+     public static void main(String args[]) {
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -493,22 +433,11 @@ public class FrmVehiculos extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FrmVehiculos.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FrmVehiculos.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FrmVehiculos.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(FrmVehiculos.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FrmVehiculos().setVisible(true);
-            }
+            public void run() { new FrmVehiculos().setVisible(true); }
         });
     }
 

@@ -1,36 +1,103 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package stradaproyectofinal;
 
-import java.awt.Image;
-import javax.swing.ImageIcon;
 
-/**
- *
- * @author mabel
- */
+import clases.User;
+import clases.Role;
+import java.awt.Color;
+import javax.swing.JButton;
+
 public class FrmMenu extends javax.swing.JFrame {
 
+    private User loggedUser;
+
+    // Colores para estado habilitado/deshabilitado (grisado)
+    private static final Color COLOR_ENABLED_BG  = new Color(153, 0, 0);    // tu rojo
+    private static final Color COLOR_ENABLED_FG  = new Color(255, 253, 253);
+    private static final Color COLOR_DISABLED_BG = new Color(120, 120, 120);// gris
+    private static final Color COLOR_DISABLED_FG = new Color(220, 220, 220);
+
+// Aplica enable/disable + estilo visual para "grisado"
+private void setButtonState(JButton btn, boolean enabled) {
+    btn.setEnabled(enabled);
+    btn.setFocusable(enabled);
+    btn.setBackground(enabled ? COLOR_ENABLED_BG : COLOR_DISABLED_BG);
+    btn.setForeground(enabled ? COLOR_ENABLED_FG : COLOR_DISABLED_FG);
+    // Si usas iconos, podrías también cambiar a un ícono en escala de grises aquí.
+}
+
+
+    // Constructor original SIN parámetros (lo deja NetBeans)
     public FrmMenu() {
         initComponents();
-        
-        this.setSize(1366, 768); 
-         this.setLocationRelativeTo(null); // Centrar pantalla
+        this.setSize(1366, 768);
+        this.setLocationRelativeTo(null);
+        applyPermissions(null); // todo gris si no hay usuario
+    }
 
-    // Escalar la imagen al tamaño del JFrame
-   /* ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Menu.png"));
-    Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
-            this.getWidth(),   
-            this.getHeight(),  
-            Image.SCALE_SMOOTH
-    );*/
-   // lblFondoM.setIcon(new ImageIcon(imagenEscalada));
-        
-        
-        
-        
+    // ---> Constructor CON parámetro: ¡sin throw!
+    public FrmMenu(User user) {
+        this();                // inicializa la UI
+        applyLoggedUser(user); // aplica el rol/permisos
+    }
+
+    // Recibe el usuario logueado y aplica permisos
+    public void applyLoggedUser(User user) {
+        this.loggedUser = user;
+        if (user != null) {
+            setTitle("Menú - " + user.getDisplayName() + " (" + user.getRole() + ")");
+            applyPermissions(user.getRole());
+        } else {
+            applyPermissions(null);
+        }
+    }
+
+    private void applyPermissions(Role role) {
+        // 1) Deshabilitar todo por defecto (grisado)
+        setButtonState(btnVehiculos,  false);
+        setButtonState(btnVentas,     false);
+        setButtonState(btnEmpleados,  false);
+        setButtonState(btnAlquiler,   false);
+        setButtonState(btnReporte,    false);
+        setButtonState(btnPagos,      false);
+        setButtonState(btnClientes1,  false);
+        setButtonState(btnDevolucion, false);
+        // Si luego agregas Factura Alquiler/Factura Ventas, también ponlas aquí en false
+
+        if (role == null) return;
+
+        switch (role) {
+            case ADMIN:
+                setButtonState(btnVehiculos,  true);
+                setButtonState(btnVentas,     true);
+                setButtonState(btnEmpleados,  true);
+                setButtonState(btnAlquiler,   true);
+                setButtonState(btnReporte,    true);
+                setButtonState(btnPagos,      true);
+                setButtonState(btnClientes1,  true);
+                setButtonState(btnDevolucion, true);
+                break;
+
+            case JEFE_ALMACEN:
+                setButtonState(btnVehiculos, true);
+                break;
+
+            case AUDITOR:
+                setButtonState(btnReporte, true);
+                break;
+
+            case CONTADOR:
+                setButtonState(btnPagos,   true);
+                setButtonState(btnReporte, true);
+                // Cuando tengas botones de Facturas, actívalos aquí también
+                break;
+
+            case VENDEDOR:
+                setButtonState(btnClientes1, true);
+                setButtonState(btnAlquiler,  true);
+                setButtonState(btnVentas,    true);
+                // Cuando tengas "Factura Alquileres" y "Factura Ventas", actívalos aquí
+                break;
+        }
     }
 
    
@@ -182,31 +249,31 @@ public class FrmMenu extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnDevolucionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDevolucionActionPerformed
-        FrmDevolucion ventana = new FrmDevolucion();
+        FrmDevolucion ventana = new FrmDevolucion(loggedUser);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnDevolucionActionPerformed
 
     private void btnVehiculosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVehiculosActionPerformed
-        FrmVehiculos ventana = new FrmVehiculos();
+        FrmVehiculos ventana = new FrmVehiculos(loggedUser);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnVehiculosActionPerformed
 
     private void btnVentasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVentasActionPerformed
-            FrmVentas ventana = new FrmVentas();
+            FrmVentas ventana = new FrmVentas(loggedUser);
             ventana.setVisible(true);
             this.dispose();
     }//GEN-LAST:event_btnVentasActionPerformed
 
     private void btnEmpleadosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEmpleadosActionPerformed
-        FrmEmpleados ventana = new FrmEmpleados();
+        FrmEmpleados ventana = new FrmEmpleados(loggedUser);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnEmpleadosActionPerformed
 
     private void btnAlquilerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAlquilerActionPerformed
-        FrmAlquiler ventana = new FrmAlquiler();
+        FrmAlquiler ventana = new FrmAlquiler(loggedUser);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnAlquilerActionPerformed
@@ -216,21 +283,20 @@ public class FrmMenu extends javax.swing.JFrame {
     }//GEN-LAST:event_btnReporteActionPerformed
 
     private void btnPagosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPagosActionPerformed
-        FrmPagos ventana = new FrmPagos();
+        FrmPagos ventana = new FrmPagos(loggedUser);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnPagosActionPerformed
 
     private void btnClientes1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClientes1ActionPerformed
-        FrmClientes ventana = new FrmClientes();
+        FrmClientes ventana = new FrmClientes(loggedUser);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnClientes1ActionPerformed
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();
-        menu.setVisible(true);
-        dispose();
+        new FrmLogin().setVisible(true);  // en vez de new FrmMenu()
+    dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
 
     /**
