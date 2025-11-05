@@ -5,6 +5,7 @@
 package stradaproyectofinal;
 
 import clases.Estilos;
+import clases.User;
 import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
@@ -27,6 +28,8 @@ import javax.swing.*;
  */
 public class FrmDevolucion extends javax.swing.JFrame {
     
+    private final User currentUser;
+    
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
@@ -37,7 +40,14 @@ public class FrmDevolucion extends javax.swing.JFrame {
     ButtonGroup grupoDanio = new ButtonGroup(); 
     java.sql.Date fechaMinimaPermitida = null;
     
-    public FrmDevolucion() {
+    public FrmDevolucion(User user) {
+        
+        this.currentUser = user;
+
+        if (currentUser != null) {
+            setTitle("Clientes - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
+        }
+        
         initComponents();
         
         Estilos.aplicarEstiloComboBox(cmbId);
@@ -586,7 +596,7 @@ private void calcularCargoExtra() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();
+        FrmMenu menu = new FrmMenu(currentUser);
         menu.setVisible(true);
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
@@ -615,11 +625,6 @@ private void calcularCargoExtra() {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -627,22 +632,11 @@ private void calcularCargoExtra() {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FrmDevolucion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FrmDevolucion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FrmDevolucion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(FrmDevolucion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            java.util.logging.Logger.getLogger(FrmClientes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FrmDevolucion().setVisible(true);
-            }
+            public void run() { new FrmClientes().setVisible(true); }
         });
     }
 

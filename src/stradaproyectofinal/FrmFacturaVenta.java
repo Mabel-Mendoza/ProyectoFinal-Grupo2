@@ -2,11 +2,23 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
+
 package stradaproyectofinal;
 
 import clases.Estilos;
+import clases.clsCarga;
+import clases.clsConexion;
+import clases.clsUtilidades;
 import java.awt.Image;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Date;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import stradaproyectofinal.FrmMenu;
 
 /**
  *
@@ -14,41 +26,191 @@ import javax.swing.ImageIcon;
  */
 public class FrmFacturaVenta extends javax.swing.JFrame {
 
+    clsConexion con = new clsConexion();
+    Connection cn = con.Sql_Conexion();
+    clsUtilidades ut = new clsUtilidades();
+    clsCarga car = new clsCarga();
+    
     /**
      * Creates new form FrmFacturaVenta
      */
+    
+    double montoTotal = 0;
+    
+    int idventa;
+    
+    String idv ;
+    
+    public FrmFacturaVenta(int idVenta) {
+        initComponents();
+        this.idventa = idVenta;
+        lblVenta.setText(String.valueOf(idventa)); // opcional, mostrar ID
+        cargarMontoTotal();
+        Estilos.aplicarEstiloComboBox(cmbEstado);
+        Estilos.aplicarEstiloComboBox(cmbPago);
+
+        Estilos.aplicarEstiloTextField(txtBuscar);
+        
+        car.cargarDatos(cmbPago, "formapago", "idformapago", "descripcion");
+        car.cargarDatos(cmbEstado, "estadofactura", "idestadofactura", "descripcion");
+    
+        ut.mostrarDatos(sqlse, jTable1, new String[]{
+            "IDFactura", "Venta", "Fecha", "FormaPago", "MontoPagado", "EstadoFactura"
+        });
+    }
+    
+    
     public FrmFacturaVenta() {
         initComponents();
         
         this.setSize(1366, 768); 
-         this.setLocationRelativeTo(null); // Centrar pantalla
+         this.setLocationRelativeTo(null); 
+        
+        ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura11.png"));
+        Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
+                this.getWidth(),   
+                this.getHeight(),  
+                Image.SCALE_SMOOTH
+        );
+        
+        lblFondoFV.setIcon(new ImageIcon(imagenEscalada));
 
-    // Escalar la imagen al tamaño del JFrame
-    ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura11.png"));
-    Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
-            this.getWidth(),   
-            this.getHeight(),  
-            Image.SCALE_SMOOTH
-    );
-    lblFondoFV.setIcon(new ImageIcon(imagenEscalada));
+    }
     
+    String sqlse = "SELECT f.idfacturaventa, " +
+            "v.idventa AS Venta, f.fechafactura, o.descripcion, "
+            + "v.totalventa, e.descripcion "+
+            "FROM facturasventas f " +
+            "JOIN ventas v ON f.idventa = v.idventa " +
+            "JOIN formapago o ON f.idformapago = o.idformapago " +
+            "JOIN estadofactura e ON f.idestadofactura = e.idestadofactura ";
+
+    private void cargarMontoTotal() {
+    try {
+        String sql = "SELECT totalpagar FROM ventas WHERE idventa = ?";
+        PreparedStatement ps = cn.prepareStatement(sql);
+        ps.setInt(1, idventa); 
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            double montoTotal = rs.getDouble("totalventa");
+            lblTotal.setText(String.format("%.2f", montoTotal));
+        }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(null, "Error al cargar monto total: " + ex.getMessage());
+    }
+}
     
+    private void registrar() {
+        
+        String montoText = lblTotal.getText(); // o de donde obtengas el valor
+        montoText = montoText.replace(",", "."); // cambia la coma por punto
+        double monto = Double.parseDouble(montoText);
+        
+        String itemF = cmbPago.getSelectedItem().toString();
+        int idF = Integer.parseInt(itemF.split(" - ")[0]);
+
+        String itemE = cmbEstado.getSelectedItem().toString();
+        int idE = Integer.parseInt(itemE.split(" - ")[0]);
+
+        String sql = "INSERT INTO facturasventas (idventa, fechafactura, idformapago, montopagado, idestadofactura) "
+                + "VALUES (?, ?, ?, ?, ?)";
+
+        Object[] parametros = {
+            idventa,
+            new java.sql.Date(jDateFactura.getDate().getTime()),
+            idF,
+            monto,
+            idE
+        };
+
+        if (ut.ejecutarActualizacion(sql, parametros)) {
+            JOptionPane.showMessageDialog(null, "Factura registrada correctamente.");
+            ut.mostrarDatos(sqlse, jTable1, new String[]{
+                "IDFactura", "Venta", "Fecha", "FormaPago", "MontoPagado", "EstadoFactura"
+            });
+        }
+    }
     
-    Estilos.aplicarEstiloComboBox(cmbEstado);
-    Estilos.aplicarEstiloComboBox(cmbPago);
+    private void editar() {
+        String montoText = lblTotal.getText(); // o de donde obtengas el valor
+        montoText = montoText.replace(",", "."); // cambia la coma por punto
+        double monto = Double.parseDouble(montoText);
+        
+        int fila = jTable1.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(null, "Seleccione una factura para editar.");
+            return;
+        }
+
+        int idFactura = Integer.parseInt(jTable1.getValueAt(fila, 0).toString());
+
+        String itemF = cmbPago.getSelectedItem().toString();
+        int idF = Integer.parseInt(itemF.split(" - ")[0]);
+
+        String itemE = cmbEstado.getSelectedItem().toString();
+        int idE = Integer.parseInt(itemE.split(" - ")[0]);
+
+        String sql = "UPDATE facturasventas SET idventa=?, fechafactura=?, idformapago=?, montopagado=?, idestadofactura=? "
+                + "WHERE idfacturaventa=?";
+
+        Object[] parametros = {
+            idventa,
+            new java.sql.Date(jDateFactura.getDate().getTime()),
+            idF,
+            monto,
+            idE,
+            idFactura
+        };
+
+        if (ut.ejecutarActualizacion(sql, parametros)) {
+            JOptionPane.showMessageDialog(null, "Factura actualizada correctamente.");
+            ut.mostrarDatos(sqlse, jTable1, new String[]{
+                "IDFactura", "Venta", "Fecha", "FormaPago", "MontoPagado", "EstadoFactura"
+            });
+        }
+    }
     
-    Estilos.aplicarEstiloTextField(txtBuscar);
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    private void seleccionarFactura() {
+    int fila = jTable1.getSelectedRow();
+    if (fila != -1) {
+        try {
+            
+            lblVenta.setText(jTable1.getValueAt(fila, 1).toString());
+            
+            try {
+                Date fecha = java.sql.Date.valueOf(jTable1.getValueAt(fila, 2).toString());
+                jDateFactura.setDate(fecha);
+            } catch (Exception e) {
+                jDateFactura.setDate(null);
+            }
+            
+            String formaP = jTable1.getValueAt(fila, 3).toString();
+            for (int i = 0; i < cmbPago.getItemCount(); i++) {
+                if (cmbPago.getItemAt(i).contains(formaP)) {
+                    cmbPago.setSelectedIndex(i);
+                    break;
+                }
+            }
+            
+            lblTotal.setText(jTable1.getValueAt(fila, 4).toString());
+            
+            String estado = jTable1.getValueAt(fila, 5).toString();
+            for (int i = 0; i < cmbEstado.getItemCount(); i++) {
+                if (cmbEstado.getItemAt(i).contains(estado)) {
+                    cmbEstado.setSelectedIndex(i);
+                    break;
+                }
+            }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error al seleccionar factura: " + e.getMessage());
+        }
+    }
     }
 
+
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -60,7 +222,7 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
 
         lblTotal = new javax.swing.JLabel();
         cmbEstado = new javax.swing.JComboBox<>();
-        lblIdVenta = new javax.swing.JLabel();
+        lblVenta = new javax.swing.JLabel();
         cmbPago = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -94,10 +256,10 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
         });
         getContentPane().add(cmbEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 430, 220, -1));
 
-        lblIdVenta.setFont(new java.awt.Font("PMingLiU-ExtB", 2, 18)); // NOI18N
-        lblIdVenta.setForeground(new java.awt.Color(242, 242, 242));
-        lblIdVenta.setText("Id de venta");
-        getContentPane().add(lblIdVenta, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 200, 90, -1));
+        lblVenta.setFont(new java.awt.Font("PMingLiU-ExtB", 2, 18)); // NOI18N
+        lblVenta.setForeground(new java.awt.Color(242, 242, 242));
+        lblVenta.setText("Id de venta");
+        getContentPane().add(lblVenta, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 200, 90, -1));
 
         cmbPago.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         getContentPane().add(cmbPago, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 310, 220, -1));
@@ -113,6 +275,11 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
+        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTable1MouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(jTable1);
 
         getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 190, 510, -1));
@@ -131,9 +298,19 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
         getContentPane().add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(1130, 100, 130, 90));
 
         btnRegistrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Regi.png"))); // NOI18N
+        btnRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnRegistrarMouseClicked(evt);
+            }
+        });
         getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 550, -1, 90));
 
         btnEditar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Editar.png"))); // NOI18N
+        btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnEditarMouseClicked(evt);
+            }
+        });
         getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 550, -1, 90));
 
         jLabel9.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
@@ -188,6 +365,18 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
 
+    private void btnRegistrarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnRegistrarMouseClicked
+        registrar();
+    }//GEN-LAST:event_btnRegistrarMouseClicked
+
+    private void btnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnEditarMouseClicked
+        editar();// TODO add your handling code here:
+    }//GEN-LAST:event_btnEditarMouseClicked
+
+    private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
+        seleccionarFactura();// TODO add your handling code here:
+    }//GEN-LAST:event_jTable1MouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -223,6 +412,7 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
         });
     }
 
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel btnEditar;
     private javax.swing.JLabel btnRegistrar;
@@ -239,9 +429,9 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblFondoFV;
-    private javax.swing.JLabel lblIdVenta;
     private javax.swing.JLabel lblRegresar;
     private javax.swing.JLabel lblTotal;
+    private javax.swing.JLabel lblVenta;
     private javax.swing.JTextField txtBuscar;
     // End of variables declaration//GEN-END:variables
 }

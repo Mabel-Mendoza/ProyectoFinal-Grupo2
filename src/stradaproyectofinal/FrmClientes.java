@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package stradaproyectofinal;
 
 import clases.Estilos;
@@ -9,195 +5,184 @@ import clases.clsCarga;
 import clases.clsCliente;
 import clases.clsConexion;
 import clases.clsUtilidades;
+import clases.User;                     // <-- SESIÓN
 import java.awt.Image;
 import javax.swing.ImageIcon;
 import java.sql.Connection;
 import javax.swing.JOptionPane;
 
-
-
 /**
- *
  * @author mabel
  */
 public class FrmClientes extends javax.swing.JFrame {
-    
-    
+
+    // ===== Sesión del usuario =====
+    private final User currentUser;
 
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
     clsCliente cli = new clsCliente();
-    
-    
-    public FrmClientes() {
-        initComponents();
-        
-        
-    Estilos.aplicarEstiloTextField(txtNombre);
-    Estilos.aplicarEstiloTextField(TxtApellido);
-    Estilos.aplicarEstiloTextField(txtCorreo);
-    Estilos.aplicarEstiloTextField(txtIdentidad);
-    Estilos.aplicarEstiloTextField(txtDireccion);
-    Estilos.aplicarEstiloTextField(txtTelefono);
-    Estilos.aplicarEstiloTextField(txtBuscar);
-    
-    Estilos.aplicarEstiloTabla(jTable1);
-    
-    
-    Estilos.aplicarEstiloComboBox(cmbsseg);
-        
-        this.setSize(1366, 768); 
-         this.setLocationRelativeTo(null); 
 
-    // Escalar la imagen al tamaño del JFrame
-    ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Clientes1.png"));
-    Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
-            this.getWidth(),   
-            this.getHeight(),  
-            Image.SCALE_SMOOTH
-    );
-    lblFondoC.setIcon(new ImageIcon(imagenEscalada));
-    
-    
-    
-    car.cargarDatos(cmbsseg,"segmentacion","idsegmentacion", "nombresegmentacion");
-        
+    // --- Constructor SIN usuario (evita usarlo en flujo real) ---
+    public FrmClientes() {
+        this(null);
+    }
+
+    // --- Constructor CON usuario (usar siempre desde el menú) ---
+    public FrmClientes(User user) {
+        this.currentUser = user;
+        initComponents();
+
+        if (currentUser != null) {
+            setTitle("Clientes - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
+        }
+
+        Estilos.aplicarEstiloTextField(txtNombre);
+        Estilos.aplicarEstiloTextField(TxtApellido);
+        Estilos.aplicarEstiloTextField(txtCorreo);
+        Estilos.aplicarEstiloTextField(txtIdentidad);
+        Estilos.aplicarEstiloTextField(txtDireccion);
+        Estilos.aplicarEstiloTextField(txtTelefono);
+        Estilos.aplicarEstiloTextField(txtBuscar);
+
+        Estilos.aplicarEstiloTabla(jTable1);
+        Estilos.aplicarEstiloComboBox(cmbsseg);
+
+        this.setSize(1366, 768);
+        this.setLocationRelativeTo(null);
+
+        // Fondo
+        ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Clientes1.png"));
+        Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
+                this.getWidth(),
+                this.getHeight(),
+                Image.SCALE_SMOOTH
+        );
+        lblFondoC.setIcon(new ImageIcon(imagenEscalada));
+
+        // Cargar combos y tabla
+        car.cargarDatos(cmbsseg,"segmentacion","idsegmentacion", "nombresegmentacion");
+
         ut.mostrarDatos(sqlse, jTable1, new String[]{
             "ID", "Nombre", "Apellido", "No Identidad", "Edad", "Sexo", "Correo", "Dirección", "Teléfono", "Segmentación"
         });
     }
-    
+
     String sqlse = "SELECT c.idcliente, c.nombrecliente, c.apellidocliente, c.noidentidad, "
        + "c.fechanacimiento, c.sexo, c.correo, c.direccion, c.telefono, s.nombresegmentacion "
        + "FROM clientes c "
        + "JOIN segmentacion s ON c.idsegmentacion = s.idsegmentacion";
 
-
-    
     private void registrar() {
-        
-        String sexo = "";
+        try {
+            String sexo = rbtfem.isSelected() ? "F" : "M";
 
-        if(rbtfem.isSelected()){
-            sexo = "F";
-        }else{
-            sexo = "M";
-        }
+            String item = cmbsseg.getSelectedItem().toString();
+            int idSeg = Integer.parseInt(item.split(" - ")[0].trim());
 
-        String item = cmbsseg.getSelectedItem().toString(); 
-        int idSeg = Integer.parseInt(item.split(" - ")[0]); 
-
-        String sql = "INSERT INTO clientes "
-                   + "(nombrecliente, apellidocliente, noidentidad, fechanacimiento, sexo, correo, direccion, telefono, idsegmentacion) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
+            String sql = "INSERT INTO clientes "
+                       + "(nombrecliente, apellidocliente, noidentidad, fechanacimiento, sexo, correo, direccion, telefono, idsegmentacion) "
+                       + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             Object[] parametros = {
-            txtNombre.getText(),
-            TxtApellido.getText(),
-            txtIdentidad.getText(),
-            new java.sql.Date(jDatenacimiento.getDate().getTime()), 
-            sexo,
-            txtCorreo.getText(),
-            txtDireccion.getText(),
-            txtTelefono.getText(),
-            idSeg
-        };
+                txtNombre.getText(),
+                TxtApellido.getText(),
+                txtIdentidad.getText(),
+                new java.sql.Date(jDatenacimiento.getDate().getTime()),
+                sexo,
+                txtCorreo.getText(),
+                txtDireccion.getText(),
+                txtTelefono.getText(),
+                idSeg
+            };
 
-
-        // 4. Ejecutar la inserción
-            if(ut.ejecutarActualizacion(sql, parametros)) {
-                JOptionPane.showMessageDialog(null, "Cliente registrado correctamente.");
-                // 5. Limpiar campos
-               // limpiarCampos();
-                // 6. Actualizar tabla
-
-                ut.mostrarDatos(sqlse, jTable1, 
+            if (ut.ejecutarActualizacion(sql, parametros)) {
+                JOptionPane.showMessageDialog(this, "Cliente registrado correctamente.");
+                ut.mostrarDatos(sqlse, jTable1,
                     new String[]{"ID", "Nombre", "Apellido", "No Identidad", "Fecha de nacimiento", "Sexo", "Correo", "Dirección", "Teléfono", "Segmentación"});
             }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al registrar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
-    
+
     private void editar() {
         int filaSeleccionada = jTable1.getSelectedRow();
-
-        if(filaSeleccionada == -1){
-            JOptionPane.showMessageDialog(null, "Seleccione un cliente para editar.");
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un cliente para editar.");
             return;
         }
 
         int idcliente = Integer.parseInt(jTable1.getValueAt(filaSeleccionada, 0).toString());
+        try {
+            String sexo = rbtfem.isSelected() ? "F" : "M";
+            String item = cmbsseg.getSelectedItem().toString();
+            int idSeg = Integer.parseInt(item.split(" - ")[0].trim());
 
-        String sexo = rbtfem.isSelected() ? "F" : "M";
+            String sql = "UPDATE clientes SET nombrecliente=?, apellidocliente=?, noidentidad=?, fechanacimiento=?, sexo=?, correo=?, direccion=?, telefono=?, idsegmentacion=? "
+                       + "WHERE idcliente=?";
 
-        String item = cmbsseg.getSelectedItem().toString(); 
-        int idSeg = Integer.parseInt(item.split(" - ")[0]);
+            Object[] parametros = {
+                txtNombre.getText(),
+                TxtApellido.getText(),
+                txtIdentidad.getText(),
+                new java.sql.Date(jDatenacimiento.getDate().getTime()),
+                sexo,
+                txtCorreo.getText(),
+                txtDireccion.getText(),
+                txtTelefono.getText(),
+                idSeg,
+                idcliente
+            };
 
-        String sql = "UPDATE clientes SET nombrecliente=?, apellidocliente=?, noidentidad=?, fechanacimiento=?, sexo=?, correo=?, direccion=?, telefono=?, idsegmentacion=? "
-           + "WHERE idcliente=?";
-
-
-        Object[] parametros = {
-            txtNombre.getText(),
-            TxtApellido.getText(),
-            txtIdentidad.getText(),
-            new java.sql.Date(jDatenacimiento.getDate().getTime()), 
-            sexo,
-            txtCorreo.getText(),
-            txtDireccion.getText(),
-            txtTelefono.getText(),
-            idSeg,
-            idcliente  
-        };
-
-
-        if(ut.ejecutarActualizacion(sql, parametros)){
-            JOptionPane.showMessageDialog(null, "Cliente actualizado correctamente.");
-            
-            ut.mostrarDatos(sqlse, jTable1, new String[]{
-                "ID", "Nombre", "Apellido", "No Identidad", "Edad", "Sexo", "Correo", "Dirección", "Teléfono", "Segmentación"
-            });
+            if (ut.ejecutarActualizacion(sql, parametros)) {
+                JOptionPane.showMessageDialog(this, "Cliente actualizado correctamente.");
+                ut.mostrarDatos(sqlse, jTable1, new String[]{
+                    "ID", "Nombre", "Apellido", "No Identidad", "Edad", "Sexo", "Correo", "Dirección", "Teléfono", "Segmentación"
+                });
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void seleccion() {
-       int fila = jTable1.getSelectedRow();
+        int fila = jTable1.getSelectedRow();
+        if (fila == -1) return;
 
-        if(fila != -1){
-            txtNombre.setText(jTable1.getValueAt(fila, 1).toString());
-            TxtApellido.setText(jTable1.getValueAt(fila, 2).toString());
-            txtIdentidad.setText(jTable1.getValueAt(fila, 3).toString());
-            try {
-                    java.util.Date fecha = java.sql.Date.valueOf(jTable1.getValueAt(fila, 4).toString());
-                    jDatenacimiento.setDate(fecha);
-                } catch (Exception e) {
-                    jDatenacimiento.setDate(null);
-                }
+        txtNombre.setText(jTable1.getValueAt(fila, 1).toString());
+        TxtApellido.setText(jTable1.getValueAt(fila, 2).toString());
+        txtIdentidad.setText(jTable1.getValueAt(fila, 3).toString());
 
+        try {
+            java.util.Date fecha = java.sql.Date.valueOf(jTable1.getValueAt(fila, 4).toString());
+            jDatenacimiento.setDate(fecha);
+        } catch (Exception e) {
+            jDatenacimiento.setDate(null);
+        }
 
-            String sexo = jTable1.getValueAt(fila, 5).toString();
-            if(sexo.equals("f")){
-                rbtfem.setSelected(true);
-            } else {
-                rbtnmas.setSelected(true);
+        String sexo = jTable1.getValueAt(fila, 5).toString();
+        if ("F".equalsIgnoreCase(sexo)) {
+            rbtfem.setSelected(true);
+            rbtnmas.setSelected(false);
+        } else {
+            rbtnmas.setSelected(true);
+            rbtfem.setSelected(false);
+        }
+
+        txtCorreo.setText(jTable1.getValueAt(fila, 6).toString());
+        txtDireccion.setText(jTable1.getValueAt(fila, 7).toString());
+        txtTelefono.setText(jTable1.getValueAt(fila, 8).toString());
+
+        String descSeg = jTable1.getValueAt(fila, 9).toString();
+        for (int i = 0; i < cmbsseg.getItemCount(); i++) {
+            if (cmbsseg.getItemAt(i).contains(descSeg)) {
+                cmbsseg.setSelectedIndex(i);
+                break;
             }
-
-            txtCorreo.setText(jTable1.getValueAt(fila, 6).toString());
-            txtDireccion.setText(jTable1.getValueAt(fila, 7).toString());
-            txtTelefono.setText(jTable1.getValueAt(fila, 8).toString());
-
-            // Segmentación: buscamos el item del combo que contenga la descripción
-            String descSeg = jTable1.getValueAt(fila, 9).toString();
-            for(int i = 0; i < cmbsseg.getItemCount(); i++){
-                if(cmbsseg.getItemAt(i).contains(descSeg)){
-                    cmbsseg.setSelectedIndex(i);
-                    break;
-                }
-            }
-    }
-    
-    
-    
+        }
     }
 
     
@@ -438,7 +423,7 @@ public class FrmClientes extends javax.swing.JFrame {
     }//GEN-LAST:event_txtTelefonoActionPerformed
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();   
+        FrmMenu menu = new FrmMenu(currentUser);   
         menu.setVisible(true);          
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
@@ -459,11 +444,6 @@ public class FrmClientes extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -471,22 +451,11 @@ public class FrmClientes extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(FrmClientes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(FrmClientes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(FrmClientes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(FrmClientes.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new FrmClientes().setVisible(true);
-            }
+            public void run() { new FrmClientes().setVisible(true); }
         });
     }
 
