@@ -17,7 +17,7 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author mabel
  */
-public class clsUtilidades {
+public class clsUtilidades extends clsConexion {
     
     private Connection cn;
     
