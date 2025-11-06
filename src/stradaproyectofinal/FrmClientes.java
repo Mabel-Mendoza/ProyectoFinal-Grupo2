@@ -34,6 +34,74 @@ public class FrmClientes extends javax.swing.JFrame {
     public FrmClientes(User user) {
         this.currentUser = user;
         initComponents();
+        
+        // ======= VALIDACIONES EN TIEMPO REAL =======
+
+// Nombre: solo letras
+txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isLetter(c) && !Character.isWhitespace(c)) {
+            evt.consume();
+        }
+    }
+});
+
+// Apellido: solo letras
+TxtApellido.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isLetter(c) && !Character.isWhitespace(c)) {
+            evt.consume();
+        }
+    }
+});
+
+// No Identidad: solo números, máximo 13
+txtIdentidad.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c)) {
+            evt.consume();
+            return;
+        }
+        if (txtIdentidad.getText().length() >= 13) {
+            evt.consume();
+        }
+    }
+});
+
+// Teléfono: solo números, máximo 8
+txtTelefono.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c)) {
+            evt.consume();
+            return;
+        }
+        if (txtTelefono.getText().length() >= 8) {
+            evt.consume();
+        }
+    }
+});
+
+// Correo: siempre en minúsculas
+txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        evt.setKeyChar(Character.toLowerCase(c));
+    }
+});
+
+        
+        
+        
+        
 
         if (currentUser != null) {
             setTitle("Clientes - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
@@ -76,6 +144,10 @@ public class FrmClientes extends javax.swing.JFrame {
        + "JOIN segmentacion s ON c.idsegmentacion = s.idsegmentacion";
 
     private void registrar() {
+            if (!validarCampos()) {
+        return;
+    }
+        
         try {
             String sexo = rbtfem.isSelected() ? "F" : "M";
 
@@ -109,6 +181,10 @@ public class FrmClientes extends javax.swing.JFrame {
     }
 
     private void editar() {
+        if (!validarCampos()) {
+            return;
+        }
+
         int filaSeleccionada = jTable1.getSelectedRow();
         if (filaSeleccionada == -1) {
             JOptionPane.showMessageDialog(this, "Seleccione un cliente para editar.");
@@ -184,38 +260,107 @@ public class FrmClientes extends javax.swing.JFrame {
             }
         }
     }
+    
+    
+    
+    // ======= VALIDACIONES GENERALES =======
+private boolean validarCampos() {
+    // --- Campos vacíos ---
+    if (txtNombre.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el nombre del cliente.");
+        txtNombre.requestFocus();
+        return false;
+    }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    if (TxtApellido.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el apellido del cliente.");
+        TxtApellido.requestFocus();
+        return false;
+    }
+
+    if (txtIdentidad.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el número de identidad.");
+        txtIdentidad.requestFocus();
+        return false;
+    }
+
+    if (txtIdentidad.getText().length() != 13) {
+        JOptionPane.showMessageDialog(this, "El número de identidad debe tener exactamente 13 dígitos.");
+        txtIdentidad.requestFocus();
+        return false;
+    }
+
+    if (jDatenacimiento.getDate() == null) {
+        JOptionPane.showMessageDialog(this, "Seleccione una fecha de nacimiento.");
+        jDatenacimiento.requestFocus();
+        return false;
+    }
+
+    // Validar edad mínima 18 años
+    java.util.Calendar hoy = java.util.Calendar.getInstance();
+    java.util.Calendar fechaNac = java.util.Calendar.getInstance();
+    fechaNac.setTime(jDatenacimiento.getDate());
+    int edad = hoy.get(java.util.Calendar.YEAR) - fechaNac.get(java.util.Calendar.YEAR);
+    if (hoy.get(java.util.Calendar.DAY_OF_YEAR) < fechaNac.get(java.util.Calendar.DAY_OF_YEAR)) {
+        edad--;
+    }
+    if (edad < 18) {
+        JOptionPane.showMessageDialog(this, "El cliente debe ser mayor de 18 años.");
+        jDatenacimiento.requestFocus();
+        return false;
+    }
+
+    // Validar sexo
+    if (!rbtfem.isSelected() && !rbtnmas.isSelected()) {
+        JOptionPane.showMessageDialog(this, "Seleccione el sexo del cliente.");
+        return false;
+    }
+
+    if (txtCorreo.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el correo electrónico del cliente.");
+        txtCorreo.requestFocus();
+        return false;
+    }
+
+    // Validar formato de correo
+    String correo = txtCorreo.getText().trim();
+    if (!correo.matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,6}$")) {
+        JOptionPane.showMessageDialog(this, "Ingrese un correo electrónico válido (ejemplo: usuario@gmail.com).");
+        txtCorreo.requestFocus();
+        return false;
+    }
+
+    if (txtDireccion.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese la dirección del cliente.");
+        txtDireccion.requestFocus();
+        return false;
+    }
+
+    if (txtTelefono.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el número de teléfono del cliente.");
+        txtTelefono.requestFocus();
+        return false;
+    }
+
+    if (txtTelefono.getText().length() != 8) {
+        JOptionPane.showMessageDialog(this, "El número de teléfono debe tener exactamente 8 dígitos.");
+        txtTelefono.requestFocus();
+        return false;
+    }
+
+    // Validar ComboBox Segmentación
+    if (cmbsseg.getSelectedIndex() == 0 ||
+        cmbsseg.getSelectedItem().toString().toLowerCase().contains("seleccione")) {
+        JOptionPane.showMessageDialog(this, "Seleccione una segmentación para el cliente.");
+        cmbsseg.requestFocus();
+        return false;
+    }
+
+    return true; // ✅ Todo bien
+}
+
+
+
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -255,6 +400,7 @@ public class FrmClientes extends javax.swing.JFrame {
         lblFondoC1 = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
         lblFondoC = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -301,7 +447,7 @@ public class FrmClientes extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
-        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 190, 530, 440));
+        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 190, 660, 440));
 
         jLabel5.setFont(new java.awt.Font("Times New Roman", 0, 48)); // NOI18N
         jLabel5.setForeground(new java.awt.Color(255, 255, 255));
@@ -309,7 +455,7 @@ public class FrmClientes extends javax.swing.JFrame {
         getContentPane().add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 20, 190, 70));
 
         txtBuscar.setText("Buscar");
-        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 140, 430, -1));
+        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 140, 550, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
         jLabel17.setText("jLabel17");
@@ -406,6 +552,7 @@ public class FrmClientes extends javax.swing.JFrame {
         lblFondoC.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Clientes1.png"))); // NOI18N
         lblFondoC.setText("jLabel1");
         getContentPane().add(lblFondoC, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1366, -1));
+        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 190, 660, 430));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -477,6 +624,7 @@ public class FrmClientes extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblFondoC;
     private javax.swing.JLabel lblFondoC1;

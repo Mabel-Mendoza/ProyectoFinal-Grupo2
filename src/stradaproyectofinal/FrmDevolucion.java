@@ -460,6 +460,7 @@ private void calcularCargoExtra() {
         txtAreaDano = new javax.swing.JTextArea();
         lblCargoEx = new javax.swing.JLabel();
         lblFondo = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -591,6 +592,7 @@ private void calcularCargoExtra() {
         lblFondo.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Devolucion.png"))); // NOI18N
         lblFondo.setText("jLabel1");
         getContentPane().add(lblFondo, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1365, -1));
+        getContentPane().add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 280, 320, 270));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -654,6 +656,7 @@ private void calcularCargoExtra() {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblCargoEx;
     private javax.swing.JLabel lblDes;

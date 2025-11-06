@@ -7,6 +7,7 @@ import clases.clsUtilidades;
 import clases.User;                  // <-- IMPORTANTE
 
 import java.awt.Image;
+import java.awt.event.KeyEvent;
 import java.sql.Connection;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -30,6 +31,111 @@ public class FrmVehiculos extends javax.swing.JFrame {
     public FrmVehiculos(User user) {
         this.currentUser = user;           // guardamos la sesión
         initComponents();
+        
+        
+      // ======= Validación para campo Precio =======
+TxtPrecio.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+
+        // Solo permitir números y un punto decimal
+        if (!Character.isDigit(c) && c != '.' && c != KeyEvent.VK_BACK_SPACE) {
+            evt.consume();
+            return;
+        }
+
+        // Evitar más de un punto decimal
+        if (c == '.' && TxtPrecio.getText().contains(".")) {
+            evt.consume();
+        }
+
+        // Evitar valores negativos o signos
+        if (c == '-' || c == '+') {
+            evt.consume();
+        }
+
+        // Limitar la longitud (por ejemplo 10 dígitos)
+        if (TxtPrecio.getText().length() >= 10) {
+            evt.consume();
+        }
+    }
+});
+
+// ======= Validación para campo Kilometraje =======
+TxtKilometraje.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+
+        // Solo permitir números
+        if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+            evt.consume();
+        }
+
+        // Evitar valores negativos
+        if (c == '-' || c == '+') {
+            evt.consume();
+        }
+
+        // Limitar la longitud (por ejemplo 7 dígitos)
+        if (TxtKilometraje.getText().length() >= 7) {
+            evt.consume();
+        }
+    }
+});
+  
+        
+        
+        
+        // ======= Validación para campo Placa =======
+TxtPlaca.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+
+        // Limitar a 7 caracteres
+        if (TxtPlaca.getText().length() >= 7) {
+            evt.consume(); // No deja escribir más
+            return;
+        }
+
+        // Convertir a mayúsculas
+        if (Character.isLetter(c)) {
+            evt.setKeyChar(Character.toUpperCase(c));
+        }
+
+        // Permitir solo letras, números y guiones (opcional)
+        if (!Character.isLetterOrDigit(c) && c != '-' && c != KeyEvent.VK_BACK_SPACE) {
+            evt.consume();
+        }
+    }
+});
+
+// ======= Validación para campo Número de Serie =======
+TxtSerie.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+
+        // Limitar a 17 caracteres
+        if (TxtSerie.getText().length() >= 17) {
+            evt.consume();
+            return;
+        }
+
+        // Convertir a mayúsculas
+        if (Character.isLetter(c)) {
+            evt.setKeyChar(Character.toUpperCase(c));
+        }
+
+        // Permitir solo letras y números
+        if (!Character.isLetterOrDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+            evt.consume();
+        }
+    }
+});
+
 
         this.setSize(1366, 768); 
         this.setLocationRelativeTo(null); // Centrar pantalla
@@ -97,6 +203,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
            + "JOIN estadovehiculo e ON v.idestadovehiculo = e.idestadovehiculo";
     
     private void registrar() {
+        if (!validarCampos()) return;
         String item = CmbProveedor.getSelectedItem().toString(); 
         int idP = Integer.parseInt(item.split(" - ")[0]); 
         String ite = CmbVehiculo.getSelectedItem().toString();
@@ -122,6 +229,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
     }
     
     private void editar() {
+        if (!validarCampos()) return;
         int filaSeleccionada = jTable1.getSelectedRow();
         if(filaSeleccionada == -1){
             JOptionPane.showMessageDialog(null, "Seleccione un vehiculo para editar.");
@@ -171,36 +279,125 @@ public class FrmVehiculos extends javax.swing.JFrame {
             String descE = jTable1.getValueAt(fila, 11).toString();
             for(int i=0;i<CmbEstado.getItemCount();i++) if(CmbEstado.getItemAt(i).contains(descE)) { CmbEstado.setSelectedIndex(i); break; }
        }
+       
+       
+       
+       
+       
     }
+    
+    // ==== VALIDACIONES ====
+private boolean validarCampos() {
+    // ====== Validaciones de texto ======
+    if (TxtPlaca.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese la placa del vehículo.");
+        TxtPlaca.requestFocus();
+        return false;
+    }
+
+    if (TxtMarca.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese la marca del vehículo.");
+        TxtMarca.requestFocus();
+        return false;
+    }
+
+    if (TxtColor.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el color del vehículo.");
+        TxtColor.requestFocus();
+        return false;
+    }
+
+    if (TxtPrecio.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el precio del vehículo.");
+        TxtPrecio.requestFocus();
+        return false;
+    }
+
+    if (TxtModelo.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el modelo del vehículo.");
+        TxtModelo.requestFocus();
+        return false;
+    }
+
+    if (TxtSerie.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el número de serie.");
+        TxtSerie.requestFocus();
+        return false;
+    }
+    
+    if (CmbVehiculo.getSelectedIndex() == 0 || 
+        CmbVehiculo.getSelectedItem().toString().toLowerCase().contains("seleccione")) {
+        JOptionPane.showMessageDialog(this, "Seleccione el tipo de vehículo.");
+        CmbVehiculo.requestFocus();
+        return false;
+    }
+
+    if (TxtKilometraje.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el kilometraje del vehículo.");
+        TxtKilometraje.requestFocus();
+        return false;
+    }
+    
+    if (CmbEstado.getSelectedIndex() == 0 || 
+        CmbEstado.getSelectedItem().toString().toLowerCase().contains("seleccione")) {
+        JOptionPane.showMessageDialog(this, "Seleccione el estado del vehículo.");
+        CmbEstado.requestFocus();
+        return false;
+    }
+
+    // ====== Validación del año ======
+    int anio = spinyear.getYear();
+    if (anio <= 1900 || anio > java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) + 1) {
+        JOptionPane.showMessageDialog(this, "Seleccione un año válido.");
+        spinyear.requestFocus();
+        return false;
+    }
+
+    // ====== Validaciones numéricas (solo números válidos) ======
+    try {
+        double precio = Double.parseDouble(TxtPrecio.getText());
+        if (precio < 0) {
+            JOptionPane.showMessageDialog(this, "El precio no puede ser negativo.");
+            TxtPrecio.requestFocus();
+            return false;
+        }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "El precio debe ser un número válido (sin letras ni símbolos).");
+        TxtPrecio.requestFocus();
+        return false;
+    }
+
+    try {
+        double km = Double.parseDouble(TxtKilometraje.getText());
+        if (km < 0) {
+            JOptionPane.showMessageDialog(this, "El kilometraje no puede ser negativo.");
+            TxtKilometraje.requestFocus();
+            return false;
+        }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "El kilometraje debe ser un número válido (sin letras ni símbolos).");
+        TxtKilometraje.requestFocus();
+        return false;
+    }
+
+    // ====== Validaciones de selección en ComboBox ======
+    if (CmbProveedor.getSelectedIndex() == 0 || 
+        CmbProveedor.getSelectedItem().toString().toLowerCase().contains("seleccione")) {
+        JOptionPane.showMessageDialog(this, "Seleccione un proveedor del vehículo.");
+        CmbProveedor.requestFocus();
+        return false;
+    }
+
+
+    return true; // ✅ Si todo está bien
+}
+
+
+
 
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+  
     
     
     /**
@@ -243,6 +440,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
         txtBuscar = new javax.swing.JTextField();
         jLabel17 = new javax.swing.JLabel();
         lblFondoV = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -293,7 +491,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
-        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 150, 580, 390));
+        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 150, 640, 390));
         getContentPane().add(spinyear, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 220, -1, -1));
 
         jLabel2.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
@@ -383,7 +581,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
         getContentPane().add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 490, -1, -1));
 
         txtBuscar.setText("Buscar");
-        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(600, 110, 500, -1));
+        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 110, 530, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
         jLabel17.setText("jLabel17");
@@ -392,6 +590,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
         lblFondoV.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Vehi1.png"))); // NOI18N
         lblFondoV.setText("Buscar");
         getContentPane().add(lblFondoV, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 0, 1360, -1));
+        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(572, 150, 640, 400));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -411,10 +610,13 @@ public class FrmVehiculos extends javax.swing.JFrame {
     }//GEN-LAST:event_lblRegresarMouseClicked
 
     private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel1MouseClicked
-         registrar();
+        if (!validarCampos()) return;
+        registrar();
+         
     }//GEN-LAST:event_jLabel1MouseClicked
 
     private void jLabel15MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel15MouseClicked
+        if (!validarCampos()) return;
         editar();
     }//GEN-LAST:event_jLabel15MouseClicked
 
@@ -468,6 +670,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblFondoV;
     private javax.swing.JLabel lblRegresar;

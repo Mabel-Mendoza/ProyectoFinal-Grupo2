@@ -44,6 +44,79 @@ public class FrmEmpleados extends javax.swing.JFrame {
         }
         
         initComponents();
+        // ======================= VALIDACIONES EN TIEMPO REAL =======================
+
+// 🔹 Validar CORREO al perder el foco
+txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        evt.setKeyChar(Character.toLowerCase(c));
+    }
+});
+
+
+        
+        // NOMBRE y APELLIDO: solo letras
+txtnombre.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isLetter(c) && !Character.isWhitespace(c)) evt.consume();
+    }
+});
+
+txtapellido1.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isLetter(c) && !Character.isWhitespace(c)) evt.consume();
+    }
+});
+
+// IDENTIDAD: solo números, máximo 13
+txtIdentidad.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c) || txtIdentidad.getText().length() >= 13) evt.consume();
+    }
+});
+
+// TELÉFONO: solo números, máximo 8
+txtTelefono.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c) || txtTelefono.getText().length() >= 8) evt.consume();
+    }
+});
+
+// SALARIO: solo números y punto decimal
+txtsalario.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if ((!Character.isDigit(c) && c != '.') || (c == '.' && txtsalario.getText().contains(".")))
+            evt.consume();
+    }
+});
+
+// CORREO: todo minúsculas automáticamente
+txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        evt.setKeyChar(Character.toLowerCase(evt.getKeyChar()));
+    }
+});
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         Estilos.aplicarEstiloTabla(jTable1);
     
         Estilos.aplicarEstiloTextField(txtnombre);
@@ -98,6 +171,9 @@ public class FrmEmpleados extends javax.swing.JFrame {
     
     private void registrar() {
         
+        if (!validarCampos()) return;
+
+        
         String sexo = rbtnfem.isSelected() ? "F" : "M";
 
         String item = cmbPuesto.getSelectedItem().toString(); 
@@ -144,6 +220,8 @@ public class FrmEmpleados extends javax.swing.JFrame {
     }
     
     private void editar() {
+        if (!validarCampos()) return;
+
         int filaSeleccionada = jTable1.getSelectedRow();
 
         if(filaSeleccionada == -1){
@@ -287,6 +365,143 @@ public class FrmEmpleados extends javax.swing.JFrame {
 }
     
     
+    private boolean validarCampos() {
+    // --- Validar campos vacíos ---
+    if (txtnombre.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo NOMBRE no puede estar vacío.");
+        txtnombre.requestFocus();
+        return false;
+    }
+
+    if (txtapellido1.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo APELLIDO no puede estar vacío.");
+        txtapellido1.requestFocus();
+        return false;
+    }
+
+    if (txtIdentidad.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo IDENTIDAD no puede estar vacío.");
+        txtIdentidad.requestFocus();
+        return false;
+    }
+
+    if (jDateNacimiento.getDate() == null) {
+        JOptionPane.showMessageDialog(this, "Seleccione una fecha de nacimiento.");
+        jDateNacimiento.requestFocus();
+        return false;
+    }
+    
+    java.util.Calendar hoy = java.util.Calendar.getInstance();
+    java.util.Calendar fechaNac = java.util.Calendar.getInstance();
+    fechaNac.setTime(jDateNacimiento.getDate());
+    int edad = hoy.get(java.util.Calendar.YEAR) - fechaNac.get(java.util.Calendar.YEAR);
+    if (hoy.get(java.util.Calendar.DAY_OF_YEAR) < fechaNac.get(java.util.Calendar.DAY_OF_YEAR)) {
+        edad--;
+    }
+    if (edad < 18) {
+        JOptionPane.showMessageDialog(this, "El empleado debe ser mayor de 18 años.");
+        jDateNacimiento.requestFocus();
+        return false;
+    }
+
+    if (!rbtnfem.isSelected() && !rbtnmas.isSelected()) {
+        JOptionPane.showMessageDialog(this, "Debe seleccionar el SEXO del empleado.");
+        return false;
+    }
+
+    if (txtCorreo.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo CORREO no puede estar vacío.");
+        txtCorreo.requestFocus();
+        return false;
+    }
+    
+    // --- Correo ---
+   String correo = txtCorreo.getText().trim();
+    if (!correo.matches("^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,6}$")) {
+        JOptionPane.showMessageDialog(this, "Ingrese un correo electrónico válido (ejemplo: usuario@gmail.com).");
+        txtCorreo.requestFocus();
+        return false;
+    }
+
+    if (txtDireccion.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo DIRECCIÓN no puede estar vacío.");
+        txtDireccion.requestFocus();
+        return false;
+    }
+
+    if (txtTelefono.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo TELÉFONO no puede estar vacío.");
+        txtTelefono.requestFocus();
+        return false;
+    }
+
+    if (txtsalario.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo SALARIO BASE no puede estar vacío.");
+        txtsalario.requestFocus();
+        return false;
+    }
+
+    if (cmbPuesto.getSelectedIndex() == 0) {
+        JOptionPane.showMessageDialog(this, "Debe seleccionar un PUESTO.");
+        cmbPuesto.requestFocus();
+        return false;
+    }
+
+    if (cmbJornada.getSelectedIndex() == 0) {
+        JOptionPane.showMessageDialog(this, "Debe seleccionar una JORNADA.");
+        cmbJornada.requestFocus();
+        return false;
+    }
+
+    if (cmbestado.getSelectedIndex() == 0) {
+        JOptionPane.showMessageDialog(this, "Debe seleccionar un ESTADO.");
+        cmbestado.requestFocus();
+        return false;
+    }
+
+    // --- Solo letras ---
+    if (!txtnombre.getText().matches("^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$")) {
+        JOptionPane.showMessageDialog(this, "El NOMBRE solo puede contener letras.");
+        txtnombre.requestFocus();
+        return false;
+    }
+
+    if (!txtapellido1.getText().matches("^[A-Za-zÁÉÍÓÚáéíóúñÑ ]+$")) {
+        JOptionPane.showMessageDialog(this, "El APELLIDO solo puede contener letras.");
+        txtapellido1.requestFocus();
+        return false;
+    }
+
+    // --- Identidad ---
+    String identidad = txtIdentidad.getText().trim();
+    if (!identidad.matches("\\d{13}")) {
+        JOptionPane.showMessageDialog(this, "La IDENTIDAD debe tener exactamente 13 números sin letras ni caracteres especiales.");
+        txtIdentidad.requestFocus();
+        return false;
+    }
+   
+
+
+    // --- Teléfono ---
+    String telefono = txtTelefono.getText().trim();
+    if (!telefono.matches("\\d{8}")) {
+        JOptionPane.showMessageDialog(this, "El TELÉFONO debe contener exactamente 8 números sin letras ni caracteres especiales.");
+        txtTelefono.requestFocus();
+        return false;
+    }
+
+    // --- Salario ---
+    String salario = txtsalario.getText().trim();
+    if (!salario.matches("\\d+(\\.\\d{1,2})?")) {
+        JOptionPane.showMessageDialog(this, "El SALARIO BASE solo puede contener números (ejemplo: 8500 o 8500.50).");
+        txtsalario.requestFocus();
+        return false;
+    }
+
+    return true;
+}
+
+    
     
     
     
@@ -345,6 +560,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
         jLabel21 = new javax.swing.JLabel();
         txtapellido1 = new javax.swing.JTextField();
         lblFondoE = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -406,7 +622,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
-        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(792, 200, 480, -1));
+        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(752, 200, 560, -1));
 
         jLabel5.setFont(new java.awt.Font("Times New Roman", 0, 48)); // NOI18N
         jLabel5.setForeground(new java.awt.Color(255, 255, 255));
@@ -414,11 +630,11 @@ public class FrmEmpleados extends javax.swing.JFrame {
         getContentPane().add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 20, 240, 70));
 
         txtBuscar.setText("Buscar");
-        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 140, 430, -1));
+        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 140, 490, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
         jLabel17.setText("jLabel17");
-        getContentPane().add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(1160, 110, 130, 90));
+        getContentPane().add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(1180, 110, 130, 90));
 
         btnRegistrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Regi.png"))); // NOI18N
         btnRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -495,7 +711,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
                 lblRegresarMouseClicked(evt);
             }
         });
-        getContentPane().add(lblRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 40, 100, -1));
+        getContentPane().add(lblRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 40, 100, 30));
 
         getContentPane().add(cmbestado, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 600, 230, 30));
 
@@ -527,6 +743,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
         lblFondoE.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Empleados1.png"))); // NOI18N
         lblFondoE.setText("jLabel1");
         getContentPane().add(lblFondoE, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1365, -1));
+        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 200, 560, 430));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -614,6 +831,7 @@ public class FrmEmpleados extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblFondoE;
     private javax.swing.JLabel lblRegresar;

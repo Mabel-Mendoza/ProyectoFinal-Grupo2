@@ -403,6 +403,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
         jLabel23 = new javax.swing.JLabel();
         lblRegresar = new javax.swing.JLabel();
         lblFondoA = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -462,10 +463,10 @@ public class FrmAlquiler extends javax.swing.JFrame {
             }
         });
         txtGara.addInputMethodListener(new java.awt.event.InputMethodListener() {
+            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
+            }
             public void inputMethodTextChanged(java.awt.event.InputMethodEvent evt) {
                 txtGaraInputMethodTextChanged(evt);
-            }
-            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
             }
         });
         txtGara.addActionListener(new java.awt.event.ActionListener() {
@@ -630,6 +631,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
         lblFondoA.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Alquiler1.png"))); // NOI18N
         lblFondoA.setText("jLabel1");
         getContentPane().add(lblFondoA, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1366, -1));
+        getContentPane().add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 160, 570, 470));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -730,6 +732,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel lblFondoA;
     private javax.swing.JLabel lblISV;
