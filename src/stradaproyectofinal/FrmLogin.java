@@ -30,7 +30,10 @@ public class FrmLogin extends javax.swing.JFrame {
     private final Color CARET_VISIBLE     = Color.WHITE;                   // cursor visible
 
     public FrmLogin() {
-        initComponents(); // *** NO TOCAR EL CONTENIDO DE ESTE MÉTODO ***
+        initComponents(); 
+        
+        setResizable(false); 
+
 
         // ----- Ajustes visuales -----
         this.setSize(1366, 768);

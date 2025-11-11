@@ -60,7 +60,21 @@ public class FrmPagos extends javax.swing.JFrame {
         }
         
         initComponents();
+        setResizable(false); 
         
+        
+        Estilos.aplicarEstiloDateChooser(jDatePago);
+        
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c) || txtBuscar.getText().length() >= 13) evt.consume();
+    }
+}); 
+        
+        
+        
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar por ID de pago");
         this.setSize(1366, 768); 
          this.setLocationRelativeTo(null); // Centrar pantalla
 
@@ -379,7 +393,26 @@ public class FrmPagos extends javax.swing.JFrame {
 
     
     
+    private void buscarPago() {
+    String texto = txtBuscar.getText().trim();
+    String sqlBusqueda;
     
+    if (texto.isEmpty()) {
+        // mostrar todos
+        sqlBusqueda = sqlse;
+    } else {
+        // búsqueda por ID de pago (numérico)
+        sqlBusqueda = sqlse + " WHERE p.idpago LIKE '%" + texto + "%'";
+    }
+
+    ut.mostrarDatos(sqlBusqueda, jTable1, new String[]{
+        "ID Pago", "Nombre", "Apellido", "Fecha Pago",
+        "Horas Extras", "Pago por Hora Extra", "Total Horas Extras",
+        "IHSS", "RAP", "Total Deducciones", "Salario Neto",
+        "Método de Pago", "Estado de Pago"
+    });
+}
+
     
     
     
@@ -503,7 +536,16 @@ public class FrmPagos extends javax.swing.JFrame {
         });
         getContentPane().add(BtnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 550, -1, 90));
 
-        txtBuscar.setText("Buscar");
+        txtBuscar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtBuscarActionPerformed(evt);
+            }
+        });
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyReleased(evt);
+            }
+        });
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(700, 120, 480, -1));
 
         lblLupa.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
@@ -599,6 +641,14 @@ public class FrmPagos extends javax.swing.JFrame {
     private void BtnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_BtnEditarMouseClicked
         editarPago();
     }//GEN-LAST:event_BtnEditarMouseClicked
+
+    private void txtBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtBuscarActionPerformed
+
+    private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
+        buscarPago();
+    }//GEN-LAST:event_txtBuscarKeyReleased
 
     /**
      * @param args the command line arguments

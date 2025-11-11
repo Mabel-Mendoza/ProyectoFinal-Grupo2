@@ -48,6 +48,8 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
         cargarMontoTotal();
         Estilos.aplicarEstiloComboBox(cmbEstado);
         Estilos.aplicarEstiloComboBox(cmbPago);
+        
+        Estilos.aplicarEstiloDateChooser(jDateFactura);
 
         Estilos.aplicarEstiloTextField(txtBuscar);
         
@@ -62,6 +64,8 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
     
     public FrmFacturaVenta() {
         initComponents();
+        setResizable(false); 
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar");
         
         this.setSize(1366, 768); 
          this.setLocationRelativeTo(null); 
@@ -289,8 +293,6 @@ public class FrmFacturaVenta extends javax.swing.JFrame {
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
         jLabel6.setText("Facturación");
         getContentPane().add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(520, 40, 230, 70));
-
-        txtBuscar.setText("Buscar");
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 140, 470, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N

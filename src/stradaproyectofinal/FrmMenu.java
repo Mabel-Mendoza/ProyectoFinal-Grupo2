@@ -29,6 +29,10 @@ private void setButtonState(JButton btn, boolean enabled) {
     // Constructor original SIN parámetros (lo deja NetBeans)
     public FrmMenu() {
         initComponents();
+        
+        setResizable(false); 
+
+        
         this.setSize(1366, 768);
         this.setLocationRelativeTo(null);
         applyPermissions(null); // todo gris si no hay usuario
@@ -61,7 +65,7 @@ private void setButtonState(JButton btn, boolean enabled) {
         setButtonState(btnPagos,      false);
         setButtonState(btnClientes1,  false);
         setButtonState(btnDevolucion, false);
-        // Si luego agregas Factura Alquiler/Factura Ventas, también ponlas aquí en false
+        
 
         if (role == null) return;
 
@@ -193,6 +197,11 @@ private void setButtonState(JButton btn, boolean enabled) {
         btnReporte.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 4, 4, 0, new java.awt.Color(255, 255, 255)));
         btnReporte.setMaximumSize(new java.awt.Dimension(66, 27));
         btnReporte.setMinimumSize(new java.awt.Dimension(66, 27));
+        btnReporte.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnReporteMouseClicked(evt);
+            }
+        });
         btnReporte.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnReporteActionPerformed(evt);
@@ -279,7 +288,9 @@ private void setButtonState(JButton btn, boolean enabled) {
     }//GEN-LAST:event_btnAlquilerActionPerformed
 
     private void btnReporteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReporteActionPerformed
-        // TODO add your handling code here:
+        FrmReportes ventana = new FrmReportes(loggedUser);
+        ventana.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_btnReporteActionPerformed
 
     private void btnPagosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPagosActionPerformed
@@ -298,6 +309,10 @@ private void setButtonState(JButton btn, boolean enabled) {
         new FrmLogin().setVisible(true);  // en vez de new FrmMenu()
     dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
+
+    private void btnReporteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnReporteMouseClicked
+        
+    }//GEN-LAST:event_btnReporteMouseClicked
 
     /**
      * @param args the command line arguments

@@ -31,6 +31,8 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     
     public FrmFacturaAlquiler(int idAlquiler) {
         initComponents();
+        setResizable(false); 
+        
         this.idAlq = idAlquiler;
         lblAlquiler.setText(String.valueOf(idAlq)); // opcional, mostrar ID
         cargarDatosAlquiler();
@@ -38,6 +40,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         Estilos.aplicarEstiloComboBox(cmbPago);
 
         Estilos.aplicarEstiloTextField(txtBuscar);
+        Estilos.aplicarEstiloDateChooser(jDateFactura);
         
         car.cargarDatos(cmbPago, "formapago", "idformapago", "descripcion");
         car.cargarDatos(cmbEstado, "estadofactura", "idestadofactura", "descripcion");
@@ -47,6 +50,8 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
 
     public FrmFacturaAlquiler() {
         initComponents();
+        
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar");
         
         this.idAlquiler = idAlquiler;
         
@@ -320,8 +325,6 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         jScrollPane1.setViewportView(jTable1);
 
         getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 190, 510, -1));
-
-        txtBuscar.setText("Buscar");
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 140, 470, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N

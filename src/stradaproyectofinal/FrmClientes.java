@@ -35,7 +35,22 @@ public class FrmClientes extends javax.swing.JFrame {
         this.currentUser = user;
         initComponents();
         
+        setResizable(false); 
+        
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar cliente por número de identidad");
+        Estilos.aplicarEstiloDateChooser(jDatenacimiento);
+        
         // ======= VALIDACIONES EN TIEMPO REAL =======
+        
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c) || txtBuscar.getText().length() >= 13) evt.consume();
+    }
+});  
+        
+        
+        
 
 // Nombre: solo letras
 txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -360,6 +375,24 @@ private boolean validarCampos() {
 }
 
 
+private void buscarClientePorIdentidad() {
+    String textoBusqueda = txtBuscar.getText().trim();
+    String sqlBuscar;
+
+    if (textoBusqueda.isEmpty()) {
+        sqlBuscar = sqlse; // Muestra todos los registros si no hay texto
+    } else {
+        sqlBuscar = sqlse + " WHERE c.noidentidad LIKE '%" + textoBusqueda + "%'";
+    }
+
+    ut.mostrarDatos(sqlBuscar, jTable1, new String[]{
+        "ID", "Nombre", "Apellido", "No Identidad", "Fecha de nacimiento", "Sexo", "Correo", "Dirección", "Teléfono", "Segmentación"
+    });
+}
+
+
+
+
 
     
     /**
@@ -454,7 +487,11 @@ private boolean validarCampos() {
         jLabel5.setText("Clientes");
         getContentPane().add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 20, 190, 70));
 
-        txtBuscar.setText("Buscar");
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyReleased(evt);
+            }
+        });
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 140, 550, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
@@ -586,6 +623,10 @@ private boolean validarCampos() {
     private void jLabel16MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel16MouseClicked
         editar();
     }//GEN-LAST:event_jLabel16MouseClicked
+
+    private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
+       buscarClientePorIdentidad();
+    }//GEN-LAST:event_txtBuscarKeyReleased
 
     /**
      * @param args the command line arguments

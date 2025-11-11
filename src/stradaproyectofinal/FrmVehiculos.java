@@ -5,6 +5,7 @@ import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
 import clases.User;                  // <-- IMPORTANTE
+import com.mysql.jdbc.PreparedStatement;
 
 import java.awt.Image;
 import java.awt.event.KeyEvent;
@@ -32,8 +33,43 @@ public class FrmVehiculos extends javax.swing.JFrame {
         this.currentUser = user;           // guardamos la sesión
         initComponents();
         
+        setResizable(false); 
+       Estilos.aplicarPlaceholder(txtBuscar, "Buscar el vehículo por placa");
+
+
+        
         
       // ======= Validación para campo Precio =======
+      
+      txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+
+        // Limitar a 7 caracteres
+        if (txtBuscar.getText().length() >= 7) {
+            evt.consume(); // No deja escribir más
+            return;
+        }
+
+        // Convertir a mayúsculas
+        if (Character.isLetter(c)) {
+            evt.setKeyChar(Character.toUpperCase(c));
+        }
+
+        // Permitir solo letras, números y guiones (opcional)
+        if (!Character.isLetterOrDigit(c) && c != '-' && c != KeyEvent.VK_BACK_SPACE) {
+            evt.consume();
+        }
+    }
+});
+      
+      
+      
+      
+      
+      
+      
 TxtPrecio.addKeyListener(new java.awt.event.KeyAdapter() {
     @Override
     public void keyTyped(java.awt.event.KeyEvent evt) {
@@ -148,12 +184,16 @@ TxtSerie.addKeyListener(new java.awt.event.KeyAdapter() {
         Estilos.aplicarEstiloTextField(TxtSerie);
         Estilos.aplicarEstiloTextField(TxtKilometraje);
         Estilos.aplicarEstiloTextField(txtBuscar);
+        
+
 
         Estilos.aplicarEstiloComboBox(CmbVehiculo);
         Estilos.aplicarEstiloComboBox(CmbEstado);
         Estilos.aplicarEstiloComboBox(CmbProveedor);
     
         Estilos.aplicarEstiloTabla(jTable1);
+        
+        
 
         // Escalar la imagen al tamaño del JFrame
         ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Vehi1.png"));
@@ -389,8 +429,26 @@ private boolean validarCampos() {
     }
 
 
-    return true; // ✅ Si todo está bien
+    return true; 
 }
+
+
+
+private void buscarVehiculoPorPlaca() {
+    String textoBusqueda = txtBuscar.getText().trim();
+    String sqlBuscar;
+
+    if (textoBusqueda.isEmpty()) {
+        sqlBuscar = sqlse; // muestra todo
+    } else {
+        sqlBuscar = sqlse + " WHERE v.placa LIKE '%" + textoBusqueda + "%'";
+    }
+
+    ut.mostrarDatos(sqlBuscar, jTable1, new String[]{
+        "ID", "Placa", "Año", "Marca", "Color", "Precio", "Modelo", "No. Serie", "Kilometraje", "Proveedor", "Tipo", "Estado"
+    });
+}
+
 
 
 
@@ -492,6 +550,8 @@ private boolean validarCampos() {
         jScrollPane1.setViewportView(jTable1);
 
         getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 150, 640, 390));
+
+        spinyear.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 1, new java.awt.Color(255, 255, 255)));
         getContentPane().add(spinyear, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 220, -1, -1));
 
         jLabel2.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
@@ -580,7 +640,11 @@ private boolean validarCampos() {
         });
         getContentPane().add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 490, -1, -1));
 
-        txtBuscar.setText("Buscar");
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyReleased(evt);
+            }
+        });
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 110, 530, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
@@ -623,6 +687,10 @@ private boolean validarCampos() {
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
         seleccion();
     }//GEN-LAST:event_jTable1MouseClicked
+
+    private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
+        buscarVehiculoPorPlaca();
+    }//GEN-LAST:event_txtBuscarKeyReleased
 
     /**
      * @param args the command line arguments

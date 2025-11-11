@@ -66,15 +66,12 @@ public class clsUtilidades extends clsConexion {
         DefaultTableModel modelo = new DefaultTableModel();
         tabla.setModel(modelo);
 
-        // columnas
         for (String col : columnas) {
             modelo.addColumn(col);
         }
 
-        // n columnas
         int numCols = columnas.length;
 
-        // n filas
         while (rs.next()) {
             Object[] fila = new Object[numCols];
             for (int i = 0; i < numCols; i++) {
@@ -85,14 +82,10 @@ public class clsUtilidades extends clsConexion {
     }
 
     // Insertar, Actualizar, Eliminar
-
-    // Método actualizaciones
     public boolean ejecutarActualizacion(String sql, Object[] parametros) {
         try (Connection cn = new clsConexion().Sql_Conexion();
          PreparedStatement pst = cn.prepareStatement(sql)) {
            
-
-            // Asignar parámetros
             for (int i = 0; i < parametros.length; i++) {
                 pst.setObject(i + 1, parametros[i]);
             }

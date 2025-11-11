@@ -4,15 +4,29 @@
  */
 package clases;
 
+import com.toedter.calendar.JDateChooser;
+import com.toedter.calendar.JYearChooser;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.MatteBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
@@ -32,6 +46,48 @@ public class Estilos {
         txt.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
     }
 
+      public static void aplicarPlaceholder(JTextField textField, String placeholder) {
+
+        // Escuchamos los cambios en el texto para repintar en tiempo real
+        textField.getDocument().addDocumentListener(new DocumentListener() {
+            private void actualizar() {
+                textField.repaint(); // <-- ya no da error
+            }
+            @Override public void insertUpdate(DocumentEvent e) { actualizar(); }
+            @Override public void removeUpdate(DocumentEvent e) { actualizar(); }
+            @Override public void changedUpdate(DocumentEvent e) { actualizar(); }
+        });
+
+        // Usamos un UI personalizado que dibuja el placeholder
+        textField.setUI(new javax.swing.plaf.basic.BasicTextFieldUI() {
+            @Override
+            protected void paintSafely(Graphics g) {
+                super.paintSafely(g);
+                if (textField.getText().isEmpty()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setColor(new Color(150, 150, 150)); // gris placeholder
+                    g2.setFont(textField.getFont().deriveFont(Font.BOLD));
+                    Insets insets = textField.getInsets();
+                    FontMetrics fm = g2.getFontMetrics();
+                    int x = insets.left + 2;
+                    int y = textField.getHeight() / 2 + fm.getAscent() / 2 - 2;
+                    g2.drawString(placeholder, x, y);
+                    g2.dispose();
+                }
+            }
+        });
+
+        // Opcional: colores de tu estilo (negro con blanco)
+        textField.setForeground(Color.WHITE);
+        textField.setCaretColor(Color.WHITE);
+        textField.setBackground(Color.BLACK);
+        textField.setBorder(BorderFactory.createLineBorder(Color.GRAY)); // si querés borde
+    }
+
+
+
+   
+    
     // Estilo para JComboBox
 public static void aplicarEstiloComboBox(JComboBox combo) {
     combo.setOpaque(true);
@@ -146,5 +202,49 @@ public static void aplicarEstiloComboBox(JComboBox combo) {
     
     
     
+
+
+    
+    
+    public static void aplicarEstiloDateChooser(JDateChooser dateChooser) {
+    // Fondo del JDateChooser
+    dateChooser.setBackground(Color.BLACK);
+    dateChooser.setOpaque(true);
+    dateChooser.setFont(new Font("PMingLiU-ExtB", Font.ITALIC, 16));
+    dateChooser.setBorder(new MatteBorder(0, 0, 2, 0, Color.WHITE));
+
+    // Campo de texto interno
+    JTextField txtFecha = ((JTextField) dateChooser.getDateEditor().getUiComponent());
+    txtFecha.setBackground(Color.BLACK);
+    txtFecha.setForeground(Color.WHITE); // texto blanco
+    txtFecha.setCaretColor(Color.WHITE);
+    txtFecha.setFont(new Font("PMingLiU-ExtB", Font.ITALIC, 16));
+    txtFecha.setBorder(null);
+    txtFecha.setEditable(false);
+
+    // Forzar que siempre sea blanco al cambiar la fecha
+    dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
+        txtFecha.setForeground(Color.WHITE);
+    });
+
+    // Botón del calendario
+    for (Component comp : dateChooser.getComponents()) {
+        if (comp instanceof JButton) {
+            JButton boton = (JButton) comp;
+            boton.setBackground(new Color(153, 0, 0)); // rojo oscuro
+            boton.setForeground(Color.WHITE);
+            boton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            boton.setFocusPainted(false);
+        }
+    }
+}
+
+
+
+
+    
+    
     
 }
+
+

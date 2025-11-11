@@ -50,6 +50,21 @@ public class FrmDevolucion extends javax.swing.JFrame {
         
         initComponents();
         
+        setResizable(false); 
+        
+        Estilos.aplicarEstiloDateChooser(jDateFinal);
+        
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c) || txtBuscar.getText().length() >= 13) evt.consume();
+    }
+}); 
+        
+        
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar por ID de devolución");
+        
+        
         Estilos.aplicarEstiloComboBox(cmbId);
         Estilos.aplicarEstiloTextField(txtBuscar);
         Estilos.aplicarEstiloTextField(txtKiloF);
@@ -412,7 +427,21 @@ private void calcularCargoExtra() {
 }
  
     
-    
+    private void buscarDevolucionPorId() {
+    String textoBusqueda = txtBuscar.getText().trim();
+    String sqlBuscar;
+
+    if (textoBusqueda.isEmpty()) {
+        sqlBuscar = sqlMostrar; // Muestra todas las devoluciones si no hay texto
+    } else {
+        sqlBuscar = sqlMostrar + " WHERE iddevolucion LIKE '%" + textoBusqueda + "%'";
+    }
+
+    ut.mostrarDatos(sqlBuscar, jTable1, new String[]{
+        "ID", "ID Alquiler", "Fecha Final", "Kilometraje Final", "Daño", "Cargo Extra"
+    });
+}
+
 
 
     
@@ -470,7 +499,11 @@ private void calcularCargoExtra() {
         jLabel6.setText("Devolución");
         getContentPane().add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(620, 30, 230, 70));
 
-        txtBuscar.setText("Buscar");
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyReleased(evt);
+            }
+        });
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 160, 500, -1));
 
         lblRegresar.setFont(new java.awt.Font("Times New Roman", 2, 26)); // NOI18N
@@ -622,6 +655,10 @@ private void calcularCargoExtra() {
     private void rbtNoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbtNoActionPerformed
         mostrarCampoDanio(false);
     }//GEN-LAST:event_rbtNoActionPerformed
+
+    private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
+        buscarDevolucionPorId();
+    }//GEN-LAST:event_txtBuscarKeyReleased
 
     /**
      * @param args the command line arguments

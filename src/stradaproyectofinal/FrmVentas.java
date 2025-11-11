@@ -50,6 +50,25 @@ public class FrmVentas extends javax.swing.JFrame {
         }
         
         initComponents();
+        
+        setResizable(false); 
+        
+        Estilos.aplicarEstiloDateChooser(jDateVenta);
+        
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isDigit(c) || txtBuscar.getText().length() >= 13) evt.consume();
+            }
+        });
+        
+        
+        
+        
+        
+        
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar venta por ID");
+        
         btnFactura11.setEnabled(false);
         this.setSize(1366, 768); 
          this.setLocationRelativeTo(null); // Centrar pantalla
@@ -353,6 +372,23 @@ public class FrmVentas extends javax.swing.JFrame {
             
         }
     }
+    
+    
+private void buscarVentaPorId() {
+    String textoBusqueda = txtBuscar.getText().trim();
+    String sqlBuscar;
+
+    if (textoBusqueda.isEmpty()) {
+        sqlBuscar = sqlse; // Muestra todos los registros si no hay texto
+    } else {
+        sqlBuscar = sqlse + " WHERE v.idventa LIKE '%" + textoBusqueda + "%'";
+    }
+
+    ut.mostrarDatos(sqlBuscar, jTable1, new String[]{
+        "ID", "Cliente", "Empleado", "Vehículo", "Fecha", "Precio", "Descuento", "ISV", "Total", "Estado"
+    });
+}
+
 
     
 
@@ -454,7 +490,11 @@ public class FrmVentas extends javax.swing.JFrame {
 
         getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 190, 570, 400));
 
-        txtBuscar.setText("Buscar");
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyReleased(evt);
+            }
+        });
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 120, 520, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
@@ -580,6 +620,10 @@ public class FrmVentas extends javax.swing.JFrame {
     private void btnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnEditarMouseClicked
         editar();
     }//GEN-LAST:event_btnEditarMouseClicked
+
+    private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
+        buscarVentaPorId();
+    }//GEN-LAST:event_txtBuscarKeyReleased
 
     /**
      * @param args the command line arguments

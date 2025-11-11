@@ -44,7 +44,22 @@ public class FrmEmpleados extends javax.swing.JFrame {
         }
         
         initComponents();
+        
+        setResizable(false); 
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar empleado por número de identidad");
+        Estilos.aplicarEstiloDateChooser(jDateNacimiento);
+        
+        
         // ======================= VALIDACIONES EN TIEMPO REAL =======================
+        
+  txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+    public void keyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (!Character.isDigit(c) || txtBuscar.getText().length() >= 13) evt.consume();
+    }
+});      
+        
+           
 
 // 🔹 Validar CORREO al perder el foco
 txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -79,6 +94,7 @@ txtIdentidad.addKeyListener(new java.awt.event.KeyAdapter() {
         if (!Character.isDigit(c) || txtIdentidad.getText().length() >= 13) evt.consume();
     }
 });
+
 
 // TELÉFONO: solo números, máximo 8
 txtTelefono.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -503,7 +519,22 @@ txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
 
     
     
-    
+   private void buscarEmpleadoPorIdentidad() {
+    String textoBusqueda = txtBuscar.getText().trim();
+    String sqlBuscar;
+
+    if (textoBusqueda.isEmpty()) {
+        sqlBuscar = sqlse; // Muestra todos los registros si no hay texto
+    } else {
+        sqlBuscar = sqlse + " WHERE e.noidentidad LIKE '%" + textoBusqueda + "%'";
+    }
+
+    ut.mostrarDatos(sqlBuscar, jTable1, new String[]{
+        "ID", "Nombre", "Apellido", "No Identidad", "Fecha Nacimiento", "Sexo", "Correo", 
+        "Dirección", "Teléfono", "Salario base", "Puesto", "Jornada", "Estado"
+    });
+}
+
     
     
     
@@ -629,7 +660,11 @@ txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
         jLabel5.setText("Empleados");
         getContentPane().add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 20, 240, 70));
 
-        txtBuscar.setText("Buscar");
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyReleased(evt);
+            }
+        });
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 140, 490, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
@@ -787,6 +822,10 @@ txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
     private void cmbPuestoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbPuestoActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cmbPuestoActionPerformed
+
+    private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
+        buscarEmpleadoPorIdentidad();
+    }//GEN-LAST:event_txtBuscarKeyReleased
 
     /**
      * @param args the command line arguments

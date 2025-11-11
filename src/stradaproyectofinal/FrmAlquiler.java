@@ -48,6 +48,21 @@ public class FrmAlquiler extends javax.swing.JFrame {
     public FrmAlquiler(User user) {
         this.currentUser = user;
         initComponents();
+        
+        setResizable(false); 
+        
+        Estilos.aplicarEstiloDateChooser(jDateInicio);
+        
+        
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isDigit(c) || txtBuscar.getText().length() >= 13) evt.consume();
+            }
+        });
+        
+        
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar por ID de alquiler");
 
         btnFactura11.setEnabled(false);
         this.setSize(1366, 768);
@@ -357,6 +372,25 @@ public class FrmAlquiler extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Error al editar alquiler: " + ex.getMessage());
         }
     }
+    
+    private void buscarAlquilerPorId() {
+    String textoBusqueda = txtBuscar.getText().trim();
+    String sqlBuscar;
+
+    if (textoBusqueda.isEmpty()) {
+        sqlBuscar = sqlse; // Muestra todos los registros si no hay texto
+    } else {
+        sqlBuscar = sqlse + " WHERE a.idalquiler LIKE '%" + textoBusqueda + "%'";
+    }
+
+    ut.mostrarDatos(sqlBuscar, jTable1, new String[]{
+        "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día",
+        "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
+    });
+}
+
+    
+    
  
     /**
      * This method is called from within the constructor to initialize the form.
@@ -522,7 +556,11 @@ public class FrmAlquiler extends javax.swing.JFrame {
         jLabel6.setText("Alquiler");
         getContentPane().add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 20, 190, 70));
 
-        txtBuscar.setText("Buscar");
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtBuscarKeyReleased(evt);
+            }
+        });
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 120, 440, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
@@ -535,7 +573,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnFactura11MouseClicked(evt);
             }
         });
-        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 670, -1, 70));
+        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 650, -1, 70));
 
         btnRegistrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Regi.png"))); // NOI18N
         btnRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -543,7 +581,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnRegistrarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 600, -1, -1));
+        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 640, -1, 90));
 
         btnEditar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Editar.png"))); // NOI18N
         btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -551,7 +589,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnEditarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 600, -1, -1));
+        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 640, -1, 80));
 
         jLabel9.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(255, 255, 255));
@@ -688,6 +726,10 @@ public class FrmAlquiler extends javax.swing.JFrame {
         menu.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnFactura11MouseClicked
+
+    private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
+        buscarAlquilerPorId();
+    }//GEN-LAST:event_txtBuscarKeyReleased
 
     /**
      * @param args the command line arguments
