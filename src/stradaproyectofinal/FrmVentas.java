@@ -17,6 +17,11 @@ import java.sql.Statement;
 import java.util.Date;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.PreparedStatement;
+import java.text.DecimalFormat;
+
 
 /**
  *
@@ -24,7 +29,9 @@ import javax.swing.JOptionPane;
  */
 public class FrmVentas extends javax.swing.JFrame {
     
-        private final User currentUser;
+   private final User currentUser;
+
+   private final DecimalFormat DF = new DecimalFormat("#,##0.00");
 
 
     clsConexion con = new clsConexion();
@@ -96,12 +103,15 @@ public class FrmVentas extends javax.swing.JFrame {
         // Llenar combos desde la BD
         car.cargarDatos(cmbCliente, "clientes", "idcliente", "CONCAT(nombrecliente, ' ', apellidocliente)");
         car.cargarDatos(cmbEmpleado, "empleados", "idempleado", "CONCAT(nombreempleado, ' ', apellidoempleado)");
-        car.cargarDatos(cmbVehiculo, "vehiculos", "idvehiculo", "modelo");
+        car.cargarDatos(cmbVehiculo, "vehiculos", "idvehiculo", "placa");
         car.cargarDatos(cmbEstado, "estadoventa", "idestadoventa", "descripcion");
 
-        // Descuentos manuales
-        cmbDescuento.addItem("1 - Tercera Edad (10%)");
-        cmbDescuento.addItem("2 - Promoción (5%)");
+        // Descuentos: 0 = sin descuento, 1 = Tercera Edad (15%), 2 = Promoción (10%)
+        cmbDescuento.removeAllItems();
+        cmbDescuento.addItem("0 - Sin descuento (0%)");
+        cmbDescuento.addItem("1 - Tercera Edad (15%)");
+        cmbDescuento.addItem("2 - Promoción (10%)");
+
 
         // Mostrar datos
         ut.mostrarDatos(sqlse, jTable1, new String[]{
@@ -127,41 +137,97 @@ public class FrmVentas extends javax.swing.JFrame {
             "JOIN estadoventa ev ON v.idestadoventa = ev.idestadoventa";
 
     private void cargarPrecioVehiculo() {
-        try {
-            String item = cmbVehiculo.getSelectedItem().toString();
-            int idVehiculo = Integer.parseInt(item.split(" - ")[0]);
-
-            String sql = "SELECT precio FROM vehiculos WHERE idvehiculo = " + idVehiculo;
-            Statement st = cn.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-
-            if (rs.next()) {
-                precioVenta = rs.getDouble("precio");
-                lblPrecio.setText(String.valueOf(precioVenta));
-                calcularTotales();
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Error al cargar precio: " + ex.getMessage());
+    try {
+        if (cmbVehiculo.getSelectedItem() == null) {
+            precioVenta = 0;
+            lblPrecio.setText(DF.format(0));
+            calcularTotales();
+            return;
         }
+
+        String item = cmbVehiculo.getSelectedItem().toString();
+        // Asegurarnos de parsear el id robustamente
+        String[] parts = item.split(" - ", 2);
+        int idVehiculo;
+        try {
+            idVehiculo = Integer.parseInt(parts[0].trim());
+        } catch (NumberFormatException ex) {
+            // si no pudo parsear, salir seguro
+            precioVenta = 0;
+            lblPrecio.setText(DF.format(0));
+            calcularTotales();
+            return;
+        }
+
+        String sql = "SELECT precio FROM vehiculos WHERE idvehiculo = ?";
+        try (PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, idVehiculo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // usar BigDecimal para precisión monetaria
+                    BigDecimal p = rs.getBigDecimal("precio");
+                    if (p == null) p = BigDecimal.ZERO;
+                    precioVenta = p.setScale(2, RoundingMode.HALF_UP).doubleValue();
+                } else {
+                    precioVenta = 0;
+                }
+            }
+        }
+
+        // Mostrar formateado (evita notación científica)
+        lblPrecio.setText(DF.format(precioVenta));
+        calcularTotales();
+
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(null, "Error al cargar precio: " + ex.getMessage());
     }
+}
+
 
     private void calcularTotales() {
-        descuento = 0;
+    try {
+        BigDecimal bdPrecio = BigDecimal.valueOf(precioVenta).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal bdDescuento = BigDecimal.ZERO;
+
+        // Obtener % desde el item del combo, con seguridad
         if (cmbDescuento.getSelectedItem() != null) {
             String desc = cmbDescuento.getSelectedItem().toString();
-            if (desc.contains("Tercera Edad")) {
-                descuento = precioVenta * 0.10;
-            } else if (desc.contains("Promoción")) {
-                descuento = precioVenta * 0.05;
+            if (desc.startsWith("1 -")) { // Tercera Edad -> 15%
+                bdDescuento = bdPrecio.multiply(BigDecimal.valueOf(0.15));
+            } else if (desc.startsWith("2 -")) { // Promoción -> 10%
+                bdDescuento = bdPrecio.multiply(BigDecimal.valueOf(0.10));
+            } else {
+                bdDescuento = BigDecimal.ZERO;
             }
         }
 
-        isv = precioVenta * 0.15; // 15% impuesto
-        total = (precioVenta - descuento) + isv;
+        // Redondear descuento
+        bdDescuento = bdDescuento.setScale(2, RoundingMode.HALF_UP);
 
-        lblISV.setText(String.valueOf(isv));
-        lblTotal.setText(String.valueOf(total));
+        // Base imponible = precio - descuento
+        BigDecimal baseImponible = bdPrecio.subtract(bdDescuento).max(BigDecimal.ZERO);
+
+        // ISV 15% sobre la base imponible
+        BigDecimal bdISV = baseImponible.multiply(BigDecimal.valueOf(0.15)).setScale(2, RoundingMode.HALF_UP);
+
+        // Total = baseImponible + ISV
+        BigDecimal bdTotal = baseImponible.add(bdISV).setScale(2, RoundingMode.HALF_UP);
+
+        // Asignar a variables de clase (si las necesitas como double para BD)
+        descuento = bdDescuento.doubleValue();
+        isv = bdISV.doubleValue();
+        total = bdTotal.doubleValue();
+
+        // Mostrar con formato
+        lblISV.setText(DF.format(isv));
+        lblTotal.setText(DF.format(total));
+        lblPrecio.setText(DF.format(precioVenta)); // asegurar precio formateado
+
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(null, "Error al calcular totales: " + ex.getMessage());
     }
+}
+
     
     public int obtenerUltimoIdVenta() {
         int idVenta = 0;
@@ -186,44 +252,54 @@ public class FrmVentas extends javax.swing.JFrame {
     private int idVent;
 
     private void registrar() {
+    try {
+        // validar antes de intentar insertar
+        if (!validarCampos()) return;
+
         String itemC = cmbCliente.getSelectedItem().toString();
-        int idC = Integer.parseInt(itemC.split(" - ")[0]);
+        int idC = Integer.parseInt(itemC.split(" - ", 2)[0].trim());
 
         String itemE = cmbEmpleado.getSelectedItem().toString();
-        int idE = Integer.parseInt(itemE.split(" - ")[0]);
+        int idE = Integer.parseInt(itemE.split(" - ", 2)[0].trim());
 
         String itemV = cmbVehiculo.getSelectedItem().toString();
-        int idV = Integer.parseInt(itemV.split(" - ")[0]);
+        int idV = Integer.parseInt(itemV.split(" - ", 2)[0].trim());
 
         String itemEV = cmbEstado.getSelectedItem().toString();
-        int idEV = Integer.parseInt(itemEV.split(" - ")[0]);
+        int idEV = Integer.parseInt(itemEV.split(" - ", 2)[0].trim());
 
         String sql = "INSERT INTO ventas (idcliente, idempleado, idvehiculo, fecha, precioventa, descuentoventa, isv, totalventa, idestadoventa) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        Object[] parametros = {
-            idC,
-            idE,
-            idV,
-            new java.sql.Date(jDateVenta.getDate().getTime()),
-            precioVenta,
-            descuento,
-            isv,
-            total,
-            idEV
-        };
+        try (PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, idC);
+            ps.setInt(2, idE);
+            ps.setInt(3, idV);
+            ps.setDate(4, new java.sql.Date(jDateVenta.getDate().getTime()));
+            ps.setBigDecimal(5, BigDecimal.valueOf(precioVenta).setScale(2, RoundingMode.HALF_UP));
+            ps.setBigDecimal(6, BigDecimal.valueOf(descuento).setScale(2, RoundingMode.HALF_UP));
+            ps.setBigDecimal(7, BigDecimal.valueOf(isv).setScale(2, RoundingMode.HALF_UP));
+            ps.setBigDecimal(8, BigDecimal.valueOf(total).setScale(2, RoundingMode.HALF_UP));
+            ps.setInt(9, idEV);
 
-        if (ut.ejecutarActualizacion(sql, parametros)) {
-            JOptionPane.showMessageDialog(null, "Venta registrada correctamente.");
-            ut.mostrarDatos(sqlse, jTable1, new String[]{
-                "ID", "Cliente", "Empleado", "Vehículo", "Fecha", "Precio", "Descuento", "ISV", "Total", "Estado"
-            });
-            
-            
-            idVent = obtenerUltimoIdVenta();
-            btnFactura11.setEnabled(true);
+            int filas = ps.executeUpdate();
+            if (filas > 0) {
+                JOptionPane.showMessageDialog(null, "Venta registrada correctamente.");
+                ut.mostrarDatos(sqlse, jTable1, new String[]{
+                    "ID", "Cliente", "Empleado", "Vehículo", "Fecha", "Precio", "Descuento", "ISV", "Total", "Estado"
+                });
+                idVent = obtenerUltimoIdVenta();
+                btnFactura11.setEnabled(true);
+            } else {
+                JOptionPane.showMessageDialog(null, "No se pudo registrar la venta.");
+            }
         }
+
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(null, "Error al registrar venta: " + ex.getMessage());
     }
+}
+
     
     
     
@@ -374,6 +450,90 @@ public class FrmVentas extends javax.swing.JFrame {
     }
     
     
+    private boolean validarCampos() {
+
+    // Validar Cliente
+    if (cmbCliente.getSelectedIndex() <= 0) {
+        JOptionPane.showMessageDialog(null, "Debe seleccionar un cliente.");
+        return false;
+    }
+
+    // Validar Empleado
+    if (cmbEmpleado.getSelectedIndex() <= 0) {
+        JOptionPane.showMessageDialog(null, "Debe seleccionar un empleado.");
+        return false;
+    }
+
+    // Validar Vehículo
+    if (cmbVehiculo.getSelectedIndex() <= 0) {
+        JOptionPane.showMessageDialog(null, "Debe seleccionar un vehículo.");
+        return false;
+    }
+    
+    // Validar fecha
+    if (jDateVenta.getDate() == null) {
+        JOptionPane.showMessageDialog(null, "Debe seleccionar una fecha de venta.");
+        return false;
+    }
+
+    
+    // Evitar ventas con fecha futura
+    java.util.Date fechaSeleccionada = jDateVenta.getDate();
+    java.util.Date hoy = new java.util.Date();
+
+    if (fechaSeleccionada.after(hoy)) {
+        JOptionPane.showMessageDialog(null, "La fecha de venta no puede ser futura.");
+        jDateVenta.requestFocus();
+        return false;
+    }
+    
+    // Validar que el precio del vehículo esté cargado
+    if (precioVenta <= 0) {
+        JOptionPane.showMessageDialog(null, "Debe seleccionar un vehículo con precio válido.");
+        return false;
+    }
+    
+    // Validación del descuento: opcional
+    if (cmbDescuento.getSelectedIndex() == -1) {
+        int opcion = JOptionPane.showConfirmDialog(
+            null,
+            "No ha seleccionado un descuento.\n¿Desea continuar sin descuento?",
+            "Confirmación",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (opcion != JOptionPane.YES_OPTION) {
+            return false;
+        }
+    }
+    
+    // Validar ISV
+    if (isv <= 0) {
+        JOptionPane.showMessageDialog(null, "El ISV no ha sido calculado correctamente.");
+        return false;
+    }
+    
+    // Validar total
+    if (total <= 0) {
+        JOptionPane.showMessageDialog(null, "El total de la venta no puede ser 0.");
+        return false;
+    }
+    
+    
+    // Validar estado
+    if (cmbEstado.getSelectedIndex() <= 0) {
+        JOptionPane.showMessageDialog(null, "Debe seleccionar un estado para la venta.");
+        return false;
+    }
+
+
+    
+
+    return true;
+}
+
+    
+    
 private void buscarVentaPorId() {
     String textoBusqueda = txtBuscar.getText().trim();
     String sqlBuscar;
@@ -452,7 +612,7 @@ private void buscarVentaPorId() {
         lblPrecio.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
         lblPrecio.setForeground(new java.awt.Color(242, 242, 242));
         lblPrecio.setText("Precio");
-        getContentPane().add(lblPrecio, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 330, 90, -1));
+        getContentPane().add(lblPrecio, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 330, 260, -1));
 
         cmbDescuento.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Promoción", "Tercera Edad", " " }));
         getContentPane().add(cmbDescuento, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 380, 180, -1));
@@ -460,12 +620,12 @@ private void buscarVentaPorId() {
         lblISV.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
         lblISV.setForeground(new java.awt.Color(242, 242, 242));
         lblISV.setText("ISV");
-        getContentPane().add(lblISV, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 430, 90, -1));
+        getContentPane().add(lblISV, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 430, 260, -1));
 
         lblTotal.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
         lblTotal.setForeground(new java.awt.Color(242, 242, 242));
         lblTotal.setText("Total");
-        getContentPane().add(lblTotal, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 480, 90, -1));
+        getContentPane().add(lblTotal, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 480, 270, -1));
 
         cmbEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         getContentPane().add(cmbEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 520, 190, -1));
@@ -603,21 +763,29 @@ private void buscarVentaPorId() {
     }//GEN-LAST:event_lblRegresarMouseClicked
 
     private void jLabel7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel7MouseClicked
+         if (!validarCampos()) return; 
         registrar();
     }//GEN-LAST:event_jLabel7MouseClicked
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
+        
         seleccionarVenta();
     }//GEN-LAST:event_jTable1MouseClicked
 
     private void btnFactura11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnFactura11MouseClicked
        
-       FrmFacturaVenta menu = new FrmFacturaVenta(idVent);   
-        menu.setVisible(true);          
-        dispose();
+       FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idVent);
+       menu.setVisible(true);
+        this.dispose();
+        
+        
+
+
+        
     }//GEN-LAST:event_btnFactura11MouseClicked
 
     private void btnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnEditarMouseClicked
+        if (!validarCampos()) return;
         editar();
     }//GEN-LAST:event_btnEditarMouseClicked
 

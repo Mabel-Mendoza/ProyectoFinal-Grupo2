@@ -14,6 +14,16 @@ import java.awt.Image;
 import java.sql.*;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.awt.Desktop;
+import java.io.File;
 
 /**
  *
@@ -38,6 +48,8 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         cargarDatosAlquiler();
         Estilos.aplicarEstiloComboBox(cmbEstado);
         Estilos.aplicarEstiloComboBox(cmbPago);
+        
+        Estilos.aplicarEstiloTabla(jTable1);
 
         Estilos.aplicarEstiloTextField(txtBuscar);
         Estilos.aplicarEstiloDateChooser(jDateFactura);
@@ -70,21 +82,53 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     
     
     private void cargarDatosAlquiler() {
-        try {
-            String sql = "SELECT totalpagar FROM alquiler WHERE idalquiler = ?";
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setInt(1, idAlquiler);
-            ResultSet rs = ps.executeQuery();
+    try {
+        // Ahora funciona para ventas o alquileres
+        totalAlquiler = obtenerTotalPorID(idAlq);
 
-            if (rs.next()) {
-                totalAlquiler = rs.getDouble("totalpagar");
-                lblTotal.setText(String.format("%.2f", totalAlquiler));
-                lblAlquiler.setText("ID Alquiler: " + idAlquiler);
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al cargar total del alquiler: " + e.getMessage());
-        }
+        lblTotal.setText(String.format("%.2f", totalAlquiler));
+        lblAlquiler.setText(" " + idAlq);
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al cargar total: " + e.getMessage());
     }
+}
+
+    
+    
+    
+    private double obtenerTotalPorID(int id) {
+    double total = 0;
+
+    try {
+        // 1️⃣ Buscar en alquiler
+        String sqlAlq = "SELECT totalpagar FROM alquiler WHERE idalquiler = ?";
+        PreparedStatement psAlq = cn.prepareStatement(sqlAlq);
+        psAlq.setInt(1, id);
+        ResultSet rsAlq = psAlq.executeQuery();
+
+        if (rsAlq.next()) {
+            return rsAlq.getDouble("totalpagar");
+        }
+
+        // 2️⃣ Si no existe en alquiler, buscar en venta
+        String sqlVen = "SELECT totalventa FROM ventas WHERE idventa = ?";
+        PreparedStatement psVen = cn.prepareStatement(sqlVen);
+        psVen.setInt(1, id);
+        ResultSet rsVen = psVen.executeQuery();
+
+        if (rsVen.next()) {
+            return rsVen.getDouble("totalventa");
+        }
+
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(null, "Error al obtener total: " + e.getMessage());
+    }
+
+    return total;
+}
+
+    
 
     private void registrarFactura() {
         try {
@@ -113,88 +157,103 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     }
 
     private void mostrarFacturas() {
-        String sql = "SELECT f.idfacturaalquiler, f.idalquiler, f.fechafactura, fp.descripcion AS 'Forma de pago', f.montopagado, ef.descripcion AS 'Estado' "
-                   + "FROM facturaalquiler f "
-                   + "JOIN formapago fp ON f.idformapago = fp.idformapago "
-                   + "JOIN estadofactura ef ON f.idestadofactura = ef.idestadofactura";
+    String sql = "SELECT " +
+                 "f.idfacturaalquiler, " +
+                 "f.idalquiler AS 'ID Proceso', " +   // 🔥 SE MUESTRA SOLO UN ID
+                 "f.fechafactura, " +
+                 "fp.descripcion AS 'Forma de pago', " +
+                 "f.montopagado, " +
+                 "ef.descripcion AS 'Estado' " +
+                 "FROM facturaalquiler f " +
+                 "JOIN formapago fp ON f.idformapago = fp.idformapago " +
+                 "JOIN estadofactura ef ON f.idestadofactura = ef.idestadofactura";
 
-        ut.mostrarDatos(sql, jTable1, new String[]{"ID Factura", "ID Alquiler", "Fecha", "Forma de Pago", "Monto", "Estado"});
-    }
+    ut.mostrarDatos(sql, jTable1, 
+        new String[]{"ID Factura", "ID Proceso", "Fecha", "Forma de Pago", "Monto", "Estado"});
+}
     
-    private void editar() {
-        String montoText = lblTotal.getText(); // o de donde obtengas el valor
-        montoText = montoText.replace(",", "."); // cambia la coma por punto
-        double monto = Double.parseDouble(montoText);
-        
-        int fila = jTable1.getSelectedRow();
-        if (fila == -1) {
-            JOptionPane.showMessageDialog(null, "Seleccione una factura para editar.");
-            return;
-        }
-
-        int idFactura = Integer.parseInt(jTable1.getValueAt(fila, 0).toString());
-
-        String itemF = cmbPago.getSelectedItem().toString();
-        int idF = Integer.parseInt(itemF.split(" - ")[0]);
-
-        String itemE = cmbEstado.getSelectedItem().toString();
-        int idE = Integer.parseInt(itemE.split(" - ")[0]);
-
-        String sql = "UPDATE facturaalquiler SET idventa=?, fechafactura=?, idformapago=?, montopagado=?, idestadofactura=? "
-                + "WHERE idfacturaalquiler=?";
-
-        Object[] parametros = {
-            idAlq,
-            new java.sql.Date(jDateFactura.getDate().getTime()),
-            idF,
-            monto,
-            idE,
-            idFactura
-        };
-
-        if (ut.ejecutarActualizacion(sql, parametros)) {
-            JOptionPane.showMessageDialog(null, "Factura actualizada correctamente.");
-            mostrarFacturas();
-        }
-    }
     
-    private void seleccionarFactura() {
+    
+    
+    
+    
+    
+    
+    
+    
+    private void generarPDFFacturaEstiloRecibo() {
     int fila = jTable1.getSelectedRow();
-    if (fila != -1) {
-        try {
-            
-            lblAlquiler.setText(jTable1.getValueAt(fila, 1).toString());
-            
-            try {
-                java.util.Date fecha = java.sql.Date.valueOf(jTable1.getValueAt(fila, 2).toString());
-                jDateFactura.setDate(fecha);
-            } catch (Exception e) {
-                jDateFactura.setDate(null);
+    if (fila == -1) {
+        JOptionPane.showMessageDialog(null, "Seleccione una factura para generar PDF.");
+        return;
+    }
+
+    try {
+        String idFactura = jTable1.getValueAt(fila, 0).toString();
+        String ruta = "Factura_" + idFactura + ".pdf";
+
+        // ----- Generar PDF (igual que antes) -----
+        Document documento = new Document(PageSize.A4, 50, 50, 50, 50);
+        PdfWriter.getInstance(documento, new FileOutputStream(ruta));
+        documento.open();
+
+        // Encabezado
+        Paragraph linea = new Paragraph("========================================", 
+                FontFactory.getFont(FontFactory.COURIER_BOLD, 12));
+        linea.setAlignment(Element.ALIGN_CENTER);
+        documento.add(linea);
+
+        Paragraph titulo = new Paragraph("*** FACTURA ***", 
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18));
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        documento.add(titulo);
+        documento.add(linea);
+        documento.add(new Paragraph(" "));
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        String idProceso = jTable1.getValueAt(fila, 1).toString();
+        String fecha = sdf.format(new java.util.Date());
+        String formaPago = jTable1.getValueAt(fila, 3).toString();
+        String monto = jTable1.getValueAt(fila, 4).toString();
+        String estado = jTable1.getValueAt(fila, 5).toString();
+
+        documento.add(new Paragraph(String.format("ID Factura     : FAC-%s", idFactura), FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph(String.format("ID Proceso     : PROC-%s", idProceso), FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph(String.format("Fecha          : %s", fecha), FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph(String.format("Forma de Pago  : %s", formaPago), FontFactory.getFont(FontFactory.COURIER, 12)));
+
+        documento.add(new Paragraph("----------------------------------------", FontFactory.getFont(FontFactory.COURIER_BOLD, 12)));
+        documento.add(new Paragraph(String.format("Monto          : L. %s", monto), FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph(String.format("Estado         : %s", estado), FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(linea);
+
+        documento.add(new Paragraph(" ", FontFactory.getFont(FontFactory.COURIER, 10)));
+        documento.add(new Paragraph("¡GRACIAS POR SU COMPRA!", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+        documento.add(new Paragraph("Su satisfacción es nuestra prioridad.", FontFactory.getFont(FontFactory.HELVETICA, 12)));
+        documento.add(linea);
+
+        documento.close();
+
+        // ----- Abrir PDF automáticamente -----
+        File file = new File(ruta);
+        if (file.exists()) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(file); // abre con la aplicación predeterminada
+            } else {
+                JOptionPane.showMessageDialog(null, "No se puede abrir automáticamente el PDF.");
             }
-            
-            String formaP = jTable1.getValueAt(fila, 3).toString();
-            for (int i = 0; i < cmbPago.getItemCount(); i++) {
-                if (cmbPago.getItemAt(i).contains(formaP)) {
-                    cmbPago.setSelectedIndex(i);
-                    break;
-                }
-            }
-            
-            lblTotal.setText(jTable1.getValueAt(fila, 4).toString());
-            
-            String estado = jTable1.getValueAt(fila, 5).toString();
-            for (int i = 0; i < cmbEstado.getItemCount(); i++) {
-                if (cmbEstado.getItemAt(i).contains(estado)) {
-                    cmbEstado.setSelectedIndex(i);
-                    break;
-                }
-            }
-            
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Error al seleccionar factura: " + e.getMessage());
         }
+
+        JOptionPane.showMessageDialog(null, "PDF generado correctamente en: " + ruta);
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al generar PDF: " + e.getMessage());
     }
-    }
+}
+
+    
+
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -218,7 +277,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         jDateFactura = new com.toedter.calendar.JDateChooser();
         lblAlquiler = new javax.swing.JLabel();
         btnRegistrar = new javax.swing.JLabel();
-        btnEditar = new javax.swing.JLabel();
+        btnPDF = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         txtBuscar = new javax.swing.JTextField();
@@ -245,7 +304,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
 
         jLabel9.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel9.setText("Id de alquiler:");
+        jLabel9.setText("Id de proceso:");
         getContentPane().add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 180, 130, 40));
 
         jLabel11.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
@@ -287,8 +346,8 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
 
         lblAlquiler.setFont(new java.awt.Font("PMingLiU-ExtB", 2, 18)); // NOI18N
         lblAlquiler.setForeground(new java.awt.Color(242, 242, 242));
-        lblAlquiler.setText("Id de alquiler");
-        getContentPane().add(lblAlquiler, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 190, 110, -1));
+        lblAlquiler.setText("Id de proceso");
+        getContentPane().add(lblAlquiler, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 190, 280, -1));
 
         btnRegistrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Regi.png"))); // NOI18N
         btnRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -298,13 +357,13 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         });
         getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 550, -1, 90));
 
-        btnEditar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Editar.png"))); // NOI18N
-        btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
+        btnPDF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura (1).png"))); // NOI18N
+        btnPDF.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnEditarMouseClicked(evt);
+                btnPDFMouseClicked(evt);
             }
         });
-        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 550, -1, 90));
+        getContentPane().add(btnPDF, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 550, -1, 90));
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -324,7 +383,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
-        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 190, 510, -1));
+        getContentPane().add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 190, 470, -1));
         getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 140, 470, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
@@ -353,14 +412,13 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         registrarFactura();
     }//GEN-LAST:event_btnRegistrarMouseClicked
 
-    private void btnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnEditarMouseClicked
-        // TODO add your handling code here:
-        editar();
-    }//GEN-LAST:event_btnEditarMouseClicked
+    private void btnPDFMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnPDFMouseClicked
+        generarPDFFacturaEstiloRecibo();
+    }//GEN-LAST:event_btnPDFMouseClicked
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
         // TODO add your handling code here:
-        seleccionarFactura();
+        
     }//GEN-LAST:event_jTable1MouseClicked
 
     /**
@@ -399,7 +457,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel btnEditar;
+    private javax.swing.JLabel btnPDF;
     private javax.swing.JLabel btnRegistrar;
     private javax.swing.JComboBox<String> cmbEstado;
     private javax.swing.JComboBox<String> cmbPago;
