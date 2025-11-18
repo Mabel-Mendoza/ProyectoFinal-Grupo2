@@ -10,6 +10,7 @@ import clases.clsConexion;
 import clases.clsUtilidades;
 import clases.clsCarga;
 import clases.Estilos;
+import clases.User;
 import java.awt.Image;
 import java.sql.*;
 import javax.swing.ImageIcon;
@@ -17,22 +18,30 @@ import javax.swing.JOptionPane;
 
 /**
  *
- * @author mabel
+ * 
  */
 public class FrmFacturaAlquiler extends javax.swing.JFrame {
     
+    private User loggedUser;
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
-    private int idAlquiler;
-    private double totalAlquiler = 0;
-    int idAlq;
+    private double totalProceso = 0;
+    int idProc;
+    int control;
     
-    public FrmFacturaAlquiler(int idAlquiler) {
+    public FrmFacturaAlquiler(int idAlquiler, int control, User user) {
+        this.loggedUser = user;
         initComponents();
-        this.idAlq = idAlquiler;
-        lblAlquiler.setText(String.valueOf(idAlq)); // opcional, mostrar ID
+        this.idProc = idAlquiler;
+        this.control = control;
+        
+        if (loggedUser != null) {
+            setTitle("Facturación - Sesión: " + loggedUser.getDisplayName() + " (" + loggedUser.getRole() + ")");
+        }
+        
+        lblAlquiler.setText(String.valueOf(idProc)); // opcional, mostrar ID
         cargarDatosAlquiler();
         Estilos.aplicarEstiloComboBox(cmbEstado);
         Estilos.aplicarEstiloComboBox(cmbPago);
@@ -48,7 +57,6 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     public FrmFacturaAlquiler() {
         initComponents();
         
-        this.idAlquiler = idAlquiler;
         
         this.setSize(1366, 768); 
          this.setLocationRelativeTo(null);
@@ -66,18 +74,36 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     
     private void cargarDatosAlquiler() {
         try {
-            String sql = "SELECT totalpagar FROM alquiler WHERE idalquiler = ?";
+            
+            String sql;
+            
+            if(control == 0){
+                sql = "SELECT totalpagar FROM alquiler WHERE idalquiler = ?";
+            }else if (control == 1){
+                sql = "SELECT totalventa FROM ventas WHERE idventa = ?";
+            }else{
+                sql = "SELECT cargoextra FROM devolucionalquiler WHERE iddevolucion = ?";
+            }
+            
             PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setInt(1, idAlquiler);
+            ps.setInt(1, idProc);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                totalAlquiler = rs.getDouble("totalpagar");
-                lblTotal.setText(String.format("%.2f", totalAlquiler));
-                lblAlquiler.setText("ID Alquiler: " + idAlquiler);
+                if (control == 0){
+                    totalProceso = rs.getDouble("totalpagar");
+                }else if (control == 1){
+                    totalProceso = rs.getDouble("totalventa");
+                }else{
+                    totalProceso = rs.getDouble("cargoextra");
+                }
+                lblTotal.setText(String.format("%.2f", totalProceso));
+                lblAlquiler.setText(String.valueOf(idProc));
+                System.out.println("ID proceso: " + idProc);
+                System.out.println(String.format("%.2f", totalProceso));
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al cargar total del alquiler: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error al cargar total del proceso: " + e.getMessage());
         }
     }
 
@@ -89,12 +115,12 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
             String itemEstado = cmbEstado.getSelectedItem().toString();
             int idEstado = Integer.parseInt(itemEstado.split(" - ")[0]);
 
-            String sql = "INSERT INTO facturaalquiler (idalquiler, fechafactura, idformapago, montopagado, idestadofactura) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO facturaalquiler (idproceso, fechafactura, idformapago, montopagado, idestadofactura) VALUES (?, ?, ?, ?, ?)";
             Object[] parametros = {
-                idAlq,
+                idProc,
                 new java.sql.Date(jDateFactura.getDate().getTime()),
                 idPago,
-                totalAlquiler,
+                totalProceso,
                 idEstado
             };
 
@@ -108,7 +134,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     }
 
     private void mostrarFacturas() {
-        String sql = "SELECT f.idfacturaalquiler, f.idalquiler, f.fechafactura, fp.descripcion AS 'Forma de pago', f.montopagado, ef.descripcion AS 'Estado' "
+        String sql = "SELECT f.idfacturaalquiler, f.idproceso, f.fechafactura, fp.descripcion AS 'Forma de pago', f.montopagado, ef.descripcion AS 'Estado' "
                    + "FROM facturaalquiler f "
                    + "JOIN formapago fp ON f.idformapago = fp.idformapago "
                    + "JOIN estadofactura ef ON f.idestadofactura = ef.idestadofactura";
@@ -135,11 +161,11 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         String itemE = cmbEstado.getSelectedItem().toString();
         int idE = Integer.parseInt(itemE.split(" - ")[0]);
 
-        String sql = "UPDATE facturaalquiler SET idventa=?, fechafactura=?, idformapago=?, montopagado=?, idestadofactura=? "
+        String sql = "UPDATE facturaalquiler SET idproceso=?, fechafactura=?, idformapago=?, montopagado=?, idestadofactura=? "
                 + "WHERE idfacturaalquiler=?";
 
         Object[] parametros = {
-            idAlq,
+            idProc,
             new java.sql.Date(jDateFactura.getDate().getTime()),
             idF,
             monto,
@@ -336,9 +362,19 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();
-        menu.setVisible(true);
-        dispose();
+        if(control == 0){
+            FrmAlquiler menu = new FrmAlquiler();
+            menu.setVisible(true);
+            dispose();
+        }else if (control == 1){
+            FrmVentas men = new FrmVentas(loggedUser);
+            men.setVisible(true);
+            dispose();
+        }else{
+            FrmDevolucion me = new FrmDevolucion(loggedUser);
+            me.setVisible(true);
+            dispose();
+        }
     }//GEN-LAST:event_lblRegresarMouseClicked
 
     private void cmbEstadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbEstadoActionPerformed

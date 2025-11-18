@@ -46,7 +46,7 @@ public class FrmVentas extends javax.swing.JFrame {
         this.setSize(1366, 768);
         this.setLocationRelativeTo(null); // Centrar pantalla
         if (currentUser != null) {
-            setTitle("Alquiler - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
+            setTitle("Ventas - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
         }
         
         initComponents();
@@ -374,6 +374,7 @@ public class FrmVentas extends javax.swing.JFrame {
         cmbDescuento = new javax.swing.JComboBox<>();
         lblISV = new javax.swing.JLabel();
         lblTotal = new javax.swing.JLabel();
+        btnFactura11 = new javax.swing.JButton();
         cmbEstado = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -381,7 +382,6 @@ public class FrmVentas extends javax.swing.JFrame {
         jLabel17 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
-        btnFactura11 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
@@ -431,6 +431,18 @@ public class FrmVentas extends javax.swing.JFrame {
         lblTotal.setText("Total");
         getContentPane().add(lblTotal, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 480, 90, -1));
 
+        btnFactura11.setBackground(new java.awt.Color(0, 0, 0));
+        btnFactura11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura.png"))); // NOI18N
+        btnFactura11.setBorder(null);
+        btnFactura11.setContentAreaFilled(false);
+        btnFactura11.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btnFactura11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFactura11ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 640, 190, 110));
+
         cmbEstado.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         getContentPane().add(cmbEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 520, 190, -1));
 
@@ -473,14 +485,6 @@ public class FrmVentas extends javax.swing.JFrame {
             }
         });
         getContentPane().add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 570, -1, 90));
-
-        btnFactura11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura.png"))); // NOI18N
-        btnFactura11.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                btnFactura11MouseClicked(evt);
-            }
-        });
-        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 650, -1, 70));
 
         jLabel9.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(255, 255, 255));
@@ -570,16 +574,17 @@ public class FrmVentas extends javax.swing.JFrame {
         seleccionarVenta();
     }//GEN-LAST:event_jTable1MouseClicked
 
-    private void btnFactura11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnFactura11MouseClicked
-       
-       FrmFacturaVenta menu = new FrmFacturaVenta(idVent);   
-        menu.setVisible(true);          
-        dispose();
-    }//GEN-LAST:event_btnFactura11MouseClicked
-
     private void btnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnEditarMouseClicked
         editar();
     }//GEN-LAST:event_btnEditarMouseClicked
+
+    private void btnFactura11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFactura11ActionPerformed
+        // TODO add your handling code here:
+        FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idVent , 1, currentUser);
+        
+        menu.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnFactura11ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -600,7 +605,7 @@ public class FrmVentas extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel btnEditar;
-    private javax.swing.JLabel btnFactura11;
+    private javax.swing.JButton btnFactura11;
     private javax.swing.JComboBox<String> cmbCliente;
     private javax.swing.JComboBox<String> cmbDescuento;
     private javax.swing.JComboBox<String> cmbEmpleado;

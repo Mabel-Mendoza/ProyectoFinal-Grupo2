@@ -435,13 +435,14 @@ public class FrmLogin extends javax.swing.JFrame {
             return;
         }
 
-        Optional<User> userOpt = UsersRepo.login(usuario, clave);
-if (userOpt.isPresent()) {
-    User logged = userOpt.get();
-    FrmMenu menu = new FrmMenu(logged); // pasa el usuario con su Role
-    menu.setVisible(true);
-    dispose();
-} 
+        UsersRepo repo = new UsersRepo();
+        Optional<User> userOpt = repo.login(usuario, clave);
+        if (userOpt.isPresent()) {
+            User logged = userOpt.get();
+            FrmMenu menu = new FrmMenu(logged); // pasa el usuario con su Role
+            menu.setVisible(true);
+            dispose();
+        } 
 
     
        

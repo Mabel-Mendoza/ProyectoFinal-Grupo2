@@ -11,9 +11,7 @@ import javax.swing.ImageIcon;
 import java.sql.Connection;
 import javax.swing.JOptionPane;
 
-/**
- * @author mabel
- */
+
 public class FrmClientes extends javax.swing.JFrame {
 
     // ===== Sesión del usuario =====

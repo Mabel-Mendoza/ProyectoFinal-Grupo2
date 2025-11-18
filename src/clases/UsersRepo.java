@@ -4,155 +4,221 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.Set;
 import javax.swing.JOptionPane;
 
-/**
- * Repositorio de usuarios contra la BD "Strada".
- * - Valida usuario/contraseña en tabla credenciales
- * - Obtiene el nombre del empleado y su puesto
- * - Mapea el puesto -> Role
- */
 public class UsersRepo {
-    
-    private static int fallosSesion = 0;
-    private static long bloqueoHasta = 0;
-    private static boolean bloqueoPermanente = false;
 
+    private Connection cn;
+
+    public UsersRepo() {
+        clsConexion con = new clsConexion();
+        this.cn = con.Sql_Conexion();
+    }
+
+    private static class Bloqueo {
+        int intentosFallidos;
+        LocalDateTime bloqueoHasta;
+        boolean bloqueoPermanente;
+
+        public Bloqueo(int intentosFallidos, LocalDateTime bloqueoHasta, boolean bloqueoPermanente) {
+            this.intentosFallidos = intentosFallidos;
+            this.bloqueoHasta = bloqueoHasta;
+            this.bloqueoPermanente = bloqueoPermanente;
+        }
+    }
+
+    // ==============================================
+    //  Mapea el puesto al enum Role
+    // ==============================================
     private static Role mapRole(String puestoDescripcion) {
         if (puestoDescripcion == null) return null;
+
         String p = puestoDescripcion.trim().toLowerCase();
 
         switch (p) {
-            case "administrador":
-                return Role.ADMIN;             
+            case "administrador": return Role.ADMIN;
             case "jefe de almacen":
-            case "jefe de almacén":
-                return Role.JEFE_ALMACEN;
-            case "vendedor":
-                return Role.VENDEDOR;
-            case "auditor":
-                return Role.AUDITOR;
-            case "contador":
-                return Role.CONTADOR;
-            default:
-                return null; // puesto desconocido
+            case "jefe de almacén": return Role.JEFE_ALMACEN;
+            case "vendedor": return Role.VENDEDOR;
+            case "auditor": return Role.AUDITOR;
+            case "contador": return Role.CONTADOR;
+            default: return null;
         }
     }
-        private static boolean estaBloqueado() {
-            if (bloqueoPermanente) return true;
 
-            long ahora = System.currentTimeMillis();
-            if (bloqueoHasta > ahora) {
-                return true; // sigue bloqueado
-            }
+    // ==============================================
+    //  Carga los datos de bloqueo desde la BD
+    // ==============================================
+    private static Bloqueo cargarBloqueo(Connection cn, String usuario) throws SQLException {
 
-            // Si ya pasó el tiempo, desbloqueamos
-            bloqueoHasta = 0;
-            return false;
-        }
-    public static Optional<User> login(String username, String password) {
- 
-     boolean esAdmin = username.equalsIgnoreCase("admin");
-
-    if (bloqueoPermanente && !esAdmin) {
-        JOptionPane.showMessageDialog(null, 
-            "El sistema está bloqueado permanentemente. Solo el administrador puede desbloquearlo.", 
-            "Bloqueo permanente", JOptionPane.ERROR_MESSAGE);
-        return Optional.empty();
-    }
-
-    if (!esAdmin && estaBloqueado()) {
-        long tiempoRestante = (bloqueoHasta - System.currentTimeMillis()) / 1000;
-        JOptionPane.showMessageDialog(null, 
-            "El sistema está temporalmente bloqueado.\nIntente nuevamente en " + tiempoRestante + " segundos.", 
-            "Bloqueo temporal", JOptionPane.WARNING_MESSAGE);
-        return Optional.empty();
-    }
-
-    clsConexion con = new clsConexion();
-    try (Connection cn = con.Sql_Conexion()) {
-        if (cn == null) return Optional.empty();
-
-        String sql = "SELECT c.usuario, e.nombreempleado, "
-                + "e.apellidoempleado, p.descripcion AS puesto "
-                + "FROM credenciales c "
-                + "JOIN empleados e ON e.idempleado = c.idempleado "
-                + "JOIN puesto p ON p.idpuesto = e.idpuesto "
-                + "WHERE BINARY c.usuario = ? AND c.contrasenia = ?";
-
+        String sql = "SELECT intentosFallidos, bloqueoHasta, bloqueoPermanente FROM credenciales WHERE usuario=?";
         try (PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, username);
-            ps.setString(2, password);
+            ps.setString(1, usuario);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    fallosSesion = 0;
 
-                    String nombre = rs.getString("nombreempleado") + " " + rs.getString("apellidoempleado");
-                    String puesto = rs.getString("puesto");
-                    Role role = mapRole(puesto);
+                    Timestamp t = rs.getTimestamp("bloqueoHasta");
 
-                    if (role == null) {
-                        JOptionPane.showMessageDialog(null, 
-                            "El puesto no tiene rol asignado.", 
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                        return Optional.empty();
-                    }
-
-                  
-                    if (role == Role.ADMIN && username.equalsIgnoreCase("admin")) {
-                        if (bloqueoPermanente || bloqueoHasta > 0) {
-                            bloqueoPermanente = false;
-                            bloqueoHasta = 0;
-                            fallosSesion = 0;
-                            JOptionPane.showMessageDialog(null, 
-                                "El sistema fue desbloqueado correctamente por el administrador.", 
-                                "Administrador", JOptionPane.INFORMATION_MESSAGE);
-                        }
-                    }
-
-                    return Optional.of(new User(username, nombre, role));
-                } else {
-                   
-                    fallosSesion++;
-
-                    switch (fallosSesion) {
-                        case 3:
-                            bloqueoHasta = System.currentTimeMillis() + (1 * 60_000); 
-                            JOptionPane.showMessageDialog(null, 
-                                "Demasiados intentos. El sistema se bloqueará por 1 minuto.", // deberia ser mas tiempo pero solo pusimos 1 para probar
-                                "Bloqueo temporal", JOptionPane.WARNING_MESSAGE);
-                            break;
-
-                        case 4:
-                            bloqueoPermanente = true;
-                            JOptionPane.showMessageDialog(null, 
-                                "El sistema ha sido bloqueado permanentemente.\nSolo el administrador puede desbloquearlo.", 
-                                "Bloqueo permanente", JOptionPane.ERROR_MESSAGE);
-                            break;
-
-                        default:
-                            JOptionPane.showMessageDialog(null, 
-                                "Usuario o contraseña incorrectos. Intento " + fallosSesion + ".", 
-                                "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-
-                    return Optional.empty();
+                    return new Bloqueo(
+                        rs.getInt("intentosFallidos"),
+                        (t != null ? t.toLocalDateTime() : null),
+                        rs.getBoolean("bloqueoPermanente")
+                    );
                 }
             }
         }
-    } catch (SQLException ex) {
-        ex.printStackTrace();
-        return Optional.empty();
+
+        return new Bloqueo(0, null, false);
     }
-}
 
+    // ==============================================
+    //  Guarda los valores de bloqueo en la BD
+    // ==============================================
+    public void guardarBloqueo(int intentosFallidos, LocalDateTime bloqueoHasta, boolean bloqueoPermanente, String usuario)
+            throws SQLException {
 
-    // (Opcional) Si más adelante usas contraseñas con hash (BCrypt/Argon2),
-    // puedes crear otro método loginHashed(...) que compare el hash acá.
+        String sql = "UPDATE credenciales SET intentosFallidos=?, bloqueoHasta=?, bloqueoPermanente=? WHERE usuario=?";
+
+        try (PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setInt(1, intentosFallidos);
+
+            if (bloqueoHasta == null) {
+                ps.setNull(2, java.sql.Types.TIMESTAMP);
+            } else {
+                ps.setTimestamp(2, Timestamp.valueOf(bloqueoHasta));
+            }
+
+            ps.setBoolean(3, bloqueoPermanente);
+            ps.setString(4, usuario);
+
+            ps.executeUpdate();
+        }
+    }
+
+    // ==============================================
+    //  LOGIN
+    // ==============================================
+    public Optional<User> login(String username, String password) {
+
+        try {
+
+            if (cn == null) return Optional.empty();
+
+            Bloqueo b = cargarBloqueo(cn, username);
+            LocalDateTime ahora = LocalDateTime.now();
+
+            // =======================================
+            //  BLOQUEO PERMANENTE
+            // =======================================
+            if (b.bloqueoPermanente && !username.equalsIgnoreCase("admin")) {
+                JOptionPane.showMessageDialog(null,
+                    "El sistema está bloqueado permanentemente.\n" +
+                    "Solo el administrador puede desbloquearlo.",
+                    "Bloqueo Permanente",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return Optional.empty();
+            }
+
+            // =======================================
+            //  BLOQUEO TEMPORAL
+            // =======================================
+            if (b.bloqueoHasta != null && b.bloqueoHasta.isAfter(ahora)
+                    && !username.equalsIgnoreCase("admin")) {
+
+                long segundos = java.time.Duration.between(ahora, b.bloqueoHasta).getSeconds();
+
+                JOptionPane.showMessageDialog(null,
+                    "El sistema está temporalmente bloqueado.\n" +
+                    "Espere " + segundos + " segundos.",
+                    "Bloqueo Temporal",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return Optional.empty();
+            }
+
+            // =======================================
+            //  CONSULTAR LOGIN
+            // =======================================
+            String sql = "SELECT c.usuario, e.nombreempleado, e.apellidoempleado, p.descripcion AS puesto "
+                       + "FROM credenciales c "
+                       + "JOIN empleados e ON e.idempleado = c.idempleado "
+                       + "JOIN puesto p ON p.idpuesto = e.idpuesto "
+                       + "WHERE BINARY c.usuario = ? AND c.contrasenia = ?";
+
+            try (PreparedStatement ps = cn.prepareStatement(sql)) {
+
+                ps.setString(1, username);
+                ps.setString(2, password);
+
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    // =======================================
+                    //  LOGIN CORRECTO
+                    // =======================================
+                    if (rs.next()) {
+
+                        // ADMIN DESBLOQUEA TODO
+                        if (username.equalsIgnoreCase("admin")) {
+                            guardarBloqueo(0, null, false, username);
+                            JOptionPane.showMessageDialog(null,
+                                "El sistema fue desbloqueado correctamente por el administrador.");
+                        }
+
+                        // Reset de bloqueo para cualquier usuario que loguea bien
+                        guardarBloqueo(0, null, false, username);
+
+                        String nombre = rs.getString("nombreempleado") + " "
+                                      + rs.getString("apellidoempleado");
+
+                        Role role = mapRole(rs.getString("puesto"));
+
+                        if (role == null) {
+                            JOptionPane.showMessageDialog(null, "El puesto no tiene rol asignado.");
+                            return Optional.empty();
+                        }
+
+                        return Optional.of(new User(username, nombre, role));
+                    }
+
+                    // =======================================
+                    //  LOGIN INCORRECTO
+                    // =======================================
+                    JOptionPane.showMessageDialog(null,
+                            "Usuario o contraseña incorrectos.\nVuelva a intentarlo.",
+                            "Credenciales inválidas",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+
+                    b.intentosFallidos++;
+
+                    // Bloqueo temporal
+                    if (b.intentosFallidos == 3) {
+                        b.bloqueoHasta = ahora.plusMinutes(1);
+                        JOptionPane.showMessageDialog(null,
+                            "Ha fallado 3 veces.\nSe bloqueará durante 1 minuto.");
+                    }
+
+                    // Bloqueo permanente
+                    if (b.intentosFallidos >= 4) {
+                        b.bloqueoPermanente = true;
+                        JOptionPane.showMessageDialog(null, "Ha superado el límite. Bloqueo permanente.");
+                    }
+
+                    guardarBloqueo(b.intentosFallidos, b.bloqueoHasta, b.bloqueoPermanente, username);
+                    return Optional.empty();
+                }
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error en la base de datos.");
+            return Optional.empty();
+        }
+    }
 }

@@ -31,7 +31,8 @@ public class clsConexion {
         
          
         cn=(Connection) DriverManager.getConnection
-        ("jdbc:mysql://localhost:3306/Strada?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC", "root", "H$1994lt");
+        ("jdbc:mysql://127.0.0.1:3306/Strada?useSSL=false",
+                 "root","root");
       
             
         

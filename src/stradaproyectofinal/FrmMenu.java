@@ -53,48 +53,50 @@ private void setButtonState(JButton btn, boolean enabled) {
 
     private void applyPermissions(Role role) {
         // 1) Deshabilitar todo por defecto (grisado)
-        setButtonState(btnVehiculos,  false);
-        setButtonState(btnVentas,     false);
-        setButtonState(btnEmpleados,  false);
-        setButtonState(btnAlquiler,   false);
-        setButtonState(btnReporte,    false);
-        setButtonState(btnPagos,      false);
-        setButtonState(btnClientes1,  false);
-        setButtonState(btnDevolucion, false);
+        
+        btnVehiculos.setEnabled(false);
+        btnEmpleados.setEnabled(false);
+        btnAlquiler.setEnabled(false);
+        btnReporte.setEnabled(false);
+        btnPagos.setEnabled(false);
+        btnClientes1.setEnabled(false);
+        btnDevolucion.setEnabled(false);
+        btnVentas.setEnabled(false);
         // Si luego agregas Factura Alquiler/Factura Ventas, también ponlas aquí en false
 
         if (role == null) return;
 
         switch (role) {
             case ADMIN:
-                setButtonState(btnVehiculos,  true);
-                setButtonState(btnVentas,     true);
-                setButtonState(btnEmpleados,  true);
-                setButtonState(btnAlquiler,   true);
-                setButtonState(btnReporte,    true);
-                setButtonState(btnPagos,      true);
-                setButtonState(btnClientes1,  true);
-                setButtonState(btnDevolucion, true);
+            btnVehiculos.setEnabled(true);
+            btnEmpleados.setEnabled(true);
+            btnVentas.setEnabled(true);
+            btnAlquiler.setEnabled(true);
+            btnReporte.setEnabled(true);
+            btnPagos.setEnabled(true);
+            btnClientes1.setEnabled(true);
+            btnDevolucion.setEnabled(true);
                 break;
 
             case JEFE_ALMACEN:
-                setButtonState(btnVehiculos, true);
+                btnVehiculos.setEnabled(true);
                 break;
 
             case AUDITOR:
-                setButtonState(btnReporte, true);
+                btnReporte.setEnabled(true);
                 break;
 
             case CONTADOR:
-                setButtonState(btnPagos,   true);
-                setButtonState(btnReporte, true);
+                btnReporte.setEnabled(true);
+                btnPagos.setEnabled(true);
                 // Cuando tengas botones de Facturas, actívalos aquí también
                 break;
 
             case VENDEDOR:
-                setButtonState(btnClientes1, true);
-                setButtonState(btnAlquiler,  true);
-                setButtonState(btnVentas,    true);
+                btnClientes1.setEnabled(true);
+                btnDevolucion.setEnabled(true);
+                btnVentas.setEnabled(true);
+                btnAlquiler.setEnabled(true);
                 // Cuando tengas "Factura Alquileres" y "Factura Ventas", actívalos aquí
                 break;
         }
