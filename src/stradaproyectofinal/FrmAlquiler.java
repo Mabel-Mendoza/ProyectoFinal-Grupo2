@@ -251,7 +251,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
             btnFactura11.setEnabled(true);
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Error al registrar alquiler: " + ex.getMessage());
+            JOptionPane.showMessageDialog(null, "Error al registrando el alquiler: " + ex.getMessage());
         }
     }
 
