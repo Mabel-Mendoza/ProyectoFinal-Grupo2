@@ -5,6 +5,8 @@ import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
 import clases.User;                           
+import clases.clsEstadoV;
+import clases.clsProc;
 
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -14,6 +16,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
@@ -31,6 +35,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
+    clsProc pro = new clsProc();
 
     private DecimalFormat df = new DecimalFormat("#,##0.00");
     double precioPorDia = 0;
@@ -40,6 +45,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
     double descuento = 0;
     double total = 0;
     double precioVehiculo = 0;
+    
 
     public FrmAlquiler() {
         this(null);
@@ -55,6 +61,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
         if (currentUser != null) {
             setTitle("Alquiler - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
         }
+        
 
         Estilos.aplicarEstiloComboBox(cmbCliente);
         Estilos.aplicarEstiloComboBox(cmbEmpleado);
@@ -92,7 +99,25 @@ public class FrmAlquiler extends javax.swing.JFrame {
 
         calcularTotales();
     }
+    
+    private int obtenerIdVehiculoSeleccionado() {
+        try {
+            
+            String item = cmbVehiculo.getSelectedItem().toString(); 
 
+            int idVehiculo = Integer.parseInt(item.split(" - ")[0].trim());
+
+            return idVehiculo;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No se pudo obtener el ID del vehículo: " + e.getMessage());
+            return -1; 
+        }
+    }
+    
+      int idVehiculo = obtenerIdVehiculoSeleccionado(); 
+
+    clsEstadoV est = new clsEstadoV();
+    int estado = est.obtenerEstadoVehiculo(cn, idVehiculo);
  
     private static class SimpleDocListener implements DocumentListener {
         private final Runnable r;
@@ -443,6 +468,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
         cmbEstado = new javax.swing.JComboBox<>();
         lblTotal = new javax.swing.JLabel();
         btnFactura11 = new javax.swing.JButton();
+        btnFactura12 = new javax.swing.JButton();
         lblkilo = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -531,10 +557,10 @@ public class FrmAlquiler extends javax.swing.JFrame {
             }
         });
         txtGara.addInputMethodListener(new java.awt.event.InputMethodListener() {
-            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
-            }
             public void inputMethodTextChanged(java.awt.event.InputMethodEvent evt) {
                 txtGaraInputMethodTextChanged(evt);
+            }
+            public void caretPositionChanged(java.awt.event.InputMethodEvent evt) {
             }
         });
         txtGara.addActionListener(new java.awt.event.ActionListener() {
@@ -575,7 +601,19 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnFactura11ActionPerformed(evt);
             }
         });
-        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(380, 650, 190, 110));
+        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 660, 190, 110));
+
+        btnFactura12.setBackground(new java.awt.Color(0, 0, 0));
+        btnFactura12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Eliminar.png"))); // NOI18N
+        btnFactura12.setBorder(null);
+        btnFactura12.setContentAreaFilled(false);
+        btnFactura12.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btnFactura12.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFactura12ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnFactura12, new org.netbeans.lib.awtextra.AbsoluteConstraints(840, 660, 190, 110));
 
         lblkilo.setFont(new java.awt.Font("PMingLiU-ExtB", 2, 18)); // NOI18N
         lblkilo.setForeground(new java.awt.Color(255, 255, 255));
@@ -625,7 +663,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnRegistrarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 600, -1, -1));
+        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 610, -1, -1));
 
         btnEditar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Editar.png"))); // NOI18N
         btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -633,7 +671,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnEditarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 600, -1, -1));
+        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 610, -1, -1));
 
         jLabel9.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(255, 255, 255));
@@ -738,6 +776,11 @@ public class FrmAlquiler extends javax.swing.JFrame {
 
     private void btnRegistrarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnRegistrarMouseClicked
         registrar();
+        if(est.validarAlquiler(cn, idVehiculo)){
+
+            pro.ejecutarSP("sp_marcar_alquilado", idVehiculo);
+            
+        }
     }//GEN-LAST:event_btnRegistrarMouseClicked
 
     private void btnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnEditarMouseClicked
@@ -796,6 +839,15 @@ public class FrmAlquiler extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_btnFactura11ActionPerformed
 
+    
+    private void btnFactura12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFactura12ActionPerformed
+        // TODO add your handling code here:
+        // del formulario de alquiler
+        FrmDevolucion devolucion = new FrmDevolucion(currentUser,idVehiculo);
+        devolucion.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnFactura12ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -816,6 +868,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel btnEditar;
     private javax.swing.JButton btnFactura11;
+    private javax.swing.JButton btnFactura12;
     private javax.swing.JLabel btnRegistrar;
     private javax.swing.JComboBox<String> cmbCliente;
     private javax.swing.JComboBox<String> cmbDescuento;

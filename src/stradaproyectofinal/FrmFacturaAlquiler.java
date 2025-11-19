@@ -11,6 +11,7 @@ import clases.clsUtilidades;
 import clases.clsCarga;
 import clases.Estilos;
 import clases.User;
+import clases.clsEstadoV;
 import java.awt.Image;
 import java.sql.*;
 import javax.swing.ImageIcon;
@@ -27,6 +28,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
+    clsEstadoV est = new clsEstadoV();
     private double totalProceso = 0;
     int idProc;
     int control;
@@ -371,7 +373,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
             men.setVisible(true);
             dispose();
         }else{
-            FrmDevolucion me = new FrmDevolucion(loggedUser);
+            FrmAlquiler me = new FrmAlquiler(loggedUser);
             me.setVisible(true);
             dispose();
         }

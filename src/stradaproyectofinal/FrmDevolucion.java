@@ -8,6 +8,8 @@ import clases.Estilos;
 import clases.User;
 import clases.clsCarga;
 import clases.clsConexion;
+import clases.clsEstadoV;
+import clases.clsProc;
 import clases.clsUtilidades;
 import java.sql.Connection;
 import clases.clsUtilidades;
@@ -35,13 +37,15 @@ public class FrmDevolucion extends javax.swing.JFrame {
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
-    
+    clsProc pro = new clsProc();
     
     
     ButtonGroup grupoDanio = new ButtonGroup(); 
     java.sql.Date fechaMinimaPermitida = null;
     
-    public FrmDevolucion(User user) {
+    int idve;
+    
+    public FrmDevolucion(User user, int idev) {
         
         this.currentUser = user;
 
@@ -50,6 +54,8 @@ public class FrmDevolucion extends javax.swing.JFrame {
         }
         
         initComponents();
+        
+        this.idve = idev;
         
         btnFactura11.setEnabled(false);
         
@@ -109,7 +115,9 @@ public class FrmDevolucion extends javax.swing.JFrame {
      
     String sqlMostrar = "SELECT iddevolucion, idalquiler, fechafinal, kilometrajefinal, dano, cargoextra FROM devolucionalquiler";
 
-   
+    clsEstadoV est = new clsEstadoV();
+    int estado = est.obtenerEstadoVehiculo(cn, idve);
+    
     private void cargarIdsAlquiler() {
         try {
             Statement st = cn.createStatement();
@@ -688,8 +696,8 @@ private void calcularCargoExtra() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu(currentUser);
-        menu.setVisible(true);
+        FrmAlquiler alq = new FrmAlquiler(currentUser);
+        alq.setVisible(true);
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
 
@@ -699,6 +707,18 @@ private void calcularCargoExtra() {
 
     private void btnRegistrarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnRegistrarMouseClicked
        registrarDevolucion();
+       if(est.validarDevolucion(cn,idve)){
+        if(rbtNo.isSelected()){
+         pro.ejecutarSP("sp_devolucion_sin_danios", idve);
+         //JOptionPane.showMessageDialog(this, "Devolución sin daños registrada.");
+         } else if(rbtSi.isSelected()){
+             pro.ejecutarSP("sp_devolucion_con_danios", idve);
+             //JOptionPane.showMessageDialog(this, "Devolución con daños registrada.");
+         } else {
+             JOptionPane.showMessageDialog(this, "Seleccione si hubo daños o no.");
+         }
+       }
+       
     }//GEN-LAST:event_btnRegistrarMouseClicked
 
     private void btnEditarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnEditarMouseClicked

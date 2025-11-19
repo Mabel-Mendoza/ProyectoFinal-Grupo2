@@ -5,6 +5,7 @@ import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
 import clases.User;                  // <-- IMPORTANTE
+import clases.clsProc;
 
 import java.awt.Image;
 import java.awt.event.KeyEvent;
@@ -21,6 +22,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
+    clsProc pro = new clsProc();
 
     // ==== Constructor SIN usuario (si alguien lo usa por error, no hay sesión) ====
     public FrmVehiculos() {
@@ -32,6 +34,7 @@ public class FrmVehiculos extends javax.swing.JFrame {
         this.currentUser = user;           // guardamos la sesión
         initComponents();
         
+        pro.ejecutarSP("sp_actualizar_limpieza");
         
       // ======= Validación para campo Precio =======
 TxtPrecio.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -177,6 +180,7 @@ TxtSerie.addKeyListener(new java.awt.event.KeyAdapter() {
             setTitle("Vehículos - Sesión: " + currentUser.getDisplayName() + " (" + currentUser.getRole() + ")");
         }
     }
+    
     
     private void limpiar(){
         TxtPlaca.setText("");

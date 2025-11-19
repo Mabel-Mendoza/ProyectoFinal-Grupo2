@@ -8,6 +8,8 @@ import clases.Estilos;
 import clases.User;
 import clases.clsCarga;
 import clases.clsConexion;
+import clases.clsEstadoV;
+import clases.clsProc;
 import clases.clsUtilidades;
 import java.awt.Image;
 import java.sql.Connection;
@@ -31,7 +33,7 @@ public class FrmVentas extends javax.swing.JFrame {
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
-    
+    clsProc pro = new clsProc();
     
     double precioVenta = 0;
     double isv = 0;
@@ -95,7 +97,7 @@ public class FrmVentas extends javax.swing.JFrame {
         // Evento descuento
         cmbDescuento.addActionListener(e -> calcularTotales());
     }
-
+    
     // Consulta principal
     String sqlse = "SELECT v.idventa, " +
             "CONCAT(c.nombrecliente,' ',c.apellidocliente) AS cliente, " +
@@ -165,6 +167,25 @@ public class FrmVentas extends javax.swing.JFrame {
     }
     
     private int idVent;
+    
+    private int obtenerIdVehiculoSeleccionado() {
+        try {
+            
+            String item = cmbVehiculo.getSelectedItem().toString(); 
+
+            int idVehiculo = Integer.parseInt(item.split(" - ")[0].trim());
+
+            return idVehiculo;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No se pudo obtener el ID del vehículo: " + e.getMessage());
+            return -1; 
+        }
+    }
+    
+    private int idv =obtenerIdVehiculoSeleccionado();
+    
+    clsEstadoV est = new clsEstadoV();
+    int estado = est.obtenerEstadoVehiculo(cn, idv);
 
     private void registrar() {
         String itemC = cmbCliente.getSelectedItem().toString();
@@ -568,6 +589,9 @@ public class FrmVentas extends javax.swing.JFrame {
 
     private void jLabel7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel7MouseClicked
         registrar();
+        if(est.validarVenta(cn, idv)){
+            pro.ejecutarSP("sp_marcar_vendido", idv);
+        }
     }//GEN-LAST:event_jLabel7MouseClicked
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked

@@ -434,9 +434,7 @@ public class FrmLogin extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Ingrese usuario y contraseña válidos.", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
-        UsersRepo repo = new UsersRepo();
-        Optional<User> userOpt = repo.login(usuario, clave);
+            Optional<User> userOpt = UsersRepo.login(usuario, clave);
         if (userOpt.isPresent()) {
             User logged = userOpt.get();
             FrmMenu menu = new FrmMenu(logged); // pasa el usuario con su Role

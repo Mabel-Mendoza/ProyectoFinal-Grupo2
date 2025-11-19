@@ -60,7 +60,6 @@ private void setButtonState(JButton btn, boolean enabled) {
         btnReporte.setEnabled(false);
         btnPagos.setEnabled(false);
         btnClientes1.setEnabled(false);
-        btnDevolucion.setEnabled(false);
         btnVentas.setEnabled(false);
         // Si luego agregas Factura Alquiler/Factura Ventas, también ponlas aquí en false
 
@@ -75,7 +74,6 @@ private void setButtonState(JButton btn, boolean enabled) {
             btnReporte.setEnabled(true);
             btnPagos.setEnabled(true);
             btnClientes1.setEnabled(true);
-            btnDevolucion.setEnabled(true);
                 break;
 
             case JEFE_ALMACEN:
@@ -94,7 +92,6 @@ private void setButtonState(JButton btn, boolean enabled) {
 
             case VENDEDOR:
                 btnClientes1.setEnabled(true);
-                btnDevolucion.setEnabled(true);
                 btnVentas.setEnabled(true);
                 btnAlquiler.setEnabled(true);
                 // Cuando tengas "Factura Alquileres" y "Factura Ventas", actívalos aquí
@@ -107,7 +104,6 @@ private void setButtonState(JButton btn, boolean enabled) {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btnDevolucion = new javax.swing.JButton();
         btnVehiculos = new javax.swing.JButton();
         btnVentas = new javax.swing.JButton();
         btnEmpleados = new javax.swing.JButton();
@@ -121,20 +117,6 @@ private void setButtonState(JButton btn, boolean enabled) {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        btnDevolucion.setBackground(new java.awt.Color(153, 0, 0));
-        btnDevolucion.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
-        btnDevolucion.setForeground(new java.awt.Color(255, 253, 253));
-        btnDevolucion.setText("Devolucion de alquiler");
-        btnDevolucion.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 4, 4, 0, new java.awt.Color(255, 255, 255)));
-        btnDevolucion.setMaximumSize(new java.awt.Dimension(66, 27));
-        btnDevolucion.setMinimumSize(new java.awt.Dimension(66, 27));
-        btnDevolucion.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDevolucionActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 320, 250, 70));
 
         btnVehiculos.setBackground(new java.awt.Color(153, 0, 0));
         btnVehiculos.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
@@ -250,12 +232,6 @@ private void setButtonState(JButton btn, boolean enabled) {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnDevolucionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDevolucionActionPerformed
-        FrmDevolucion ventana = new FrmDevolucion(loggedUser);
-        ventana.setVisible(true);
-        this.dispose();
-    }//GEN-LAST:event_btnDevolucionActionPerformed
-
     private void btnVehiculosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVehiculosActionPerformed
         FrmVehiculos ventana = new FrmVehiculos(loggedUser);
         ventana.setVisible(true);
@@ -339,7 +315,6 @@ private void setButtonState(JButton btn, boolean enabled) {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAlquiler;
     private javax.swing.JButton btnClientes1;
-    private javax.swing.JButton btnDevolucion;
     private javax.swing.JButton btnEmpleados;
     private javax.swing.JButton btnPagos;
     private javax.swing.JButton btnReporte;
