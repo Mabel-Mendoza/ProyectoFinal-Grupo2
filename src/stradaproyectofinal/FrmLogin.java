@@ -50,11 +50,9 @@ public class FrmLogin extends javax.swing.JFrame {
         txtcontra.setForeground(TEXT_COLOR);
         txtcontra.setFont(new java.awt.Font("Times New Roman", java.awt.Font.ITALIC, 18));
 
-        // ----- Config base de contraseña -----
         echoOriginal = '•';
         txtcontra.setEchoChar(echoOriginal);
 
-        // ===== Inicialización como pista =====
         // Usuario
         if (USER_HINT.equals(txtUsuario.getText()) || txtUsuario.getText().trim().isEmpty()) {
             aplicarHintUsuario();
