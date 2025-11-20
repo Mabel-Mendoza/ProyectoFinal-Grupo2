@@ -4,20 +4,33 @@ import clases.Estilos;
 import clases.clsCarga;
 import clases.clsConexion;
 import clases.clsUtilidades;
-import clases.User;                            // <-- SESIÓN
+import clases.User;                            
+import com.itextpdf.text.Element;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
+import java.awt.Desktop;
+import java.awt.Font;
 
 import java.awt.Image;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.Document;
+
+
 
 /**
  * @author mabel
@@ -93,13 +106,13 @@ public class FrmAlquiler extends javax.swing.JFrame {
         car.cargarDatos(cmbCliente, "clientes", "idcliente", "CONCAT(nombrecliente,' ',apellidocliente)");
         car.cargarDatos(cmbEmpleado, "empleados", "idempleado", "CONCAT(nombreempleado,' ',apellidoempleado)");
         car.cargarDatos(cmbVehiculo, "vehiculos", "idvehiculo", "modelo");
-        car.cargarDatos(cmbEstado, "estadoalquiler", "idestadoalquiler", "CONCAT(idestadoalquiler,' - ',descripcion)");
+        car.cargarDatos(cmbEstado, "estadoalquiler", "idestadoalquiler", "CONCAT(descripcion)");
 
         // Descuentos manuales
         cmbDescuento.removeAllItems();
-        cmbDescuento.addItem("0 - No aplica");
-        cmbDescuento.addItem("1- Promoción");
-        cmbDescuento.addItem("2- Tercera edad");
+        cmbDescuento.addItem("No aplica");
+        cmbDescuento.addItem("Promoción");
+        cmbDescuento.addItem("Tercera edad");
 
         // Tabla
         ut.mostrarDatos(sqlse, jTable1, new String[]{
@@ -116,6 +129,23 @@ public class FrmAlquiler extends javax.swing.JFrame {
         // Cálculo inicial
         calcularTotales();
     }
+    
+    
+    private int obtenerIdVehiculoSeleccionado() {
+        try {
+            
+            String item = cmbVehiculo.getSelectedItem().toString(); 
+
+            int idVehiculo = Integer.parseInt(item.split(" - ")[0].trim());
+
+            return idVehiculo;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No se pudo obtener el ID del vehículo: " + e.getMessage());
+            return -1; 
+        }
+    }
+    
+      int idVehiculo = obtenerIdVehiculoSeleccionado(); 
 
     // Listener corto
     private static class SimpleDocListener implements DocumentListener {
@@ -369,6 +399,10 @@ public class FrmAlquiler extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Error al editar alquiler: " + ex.getMessage());
         }
     }
+    
+    
+    
+ 
 
     
     private boolean validarCampos() {
@@ -456,7 +490,122 @@ public class FrmAlquiler extends javax.swing.JFrame {
         "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día",
         "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
     });
+    
+    
 }
+    
+private void generarPDFContratoAlquiler() {
+    int fila = jTable1.getSelectedRow();
+    if (fila == -1) {
+        JOptionPane.showMessageDialog(null, "Seleccione un alquiler para generar el contrato.");
+        return;
+    }
+
+    try {
+        String idAlquiler = jTable1.getValueAt(fila, 0).toString();
+        String ruta = "ContratoAlquiler_" + idAlquiler + ".pdf";
+
+        // ----- Crear PDF -----
+        com.itextpdf.text.Document documento = new com.itextpdf.text.Document(PageSize.A4, 50, 50, 50, 50);
+        PdfWriter.getInstance(documento, new FileOutputStream(ruta));
+        documento.open();
+
+        // Línea superior
+        Paragraph linea = new Paragraph("--------------------------------------------------------------",
+                FontFactory.getFont(FontFactory.COURIER_BOLD, 12));
+        linea.setAlignment(Element.ALIGN_CENTER);
+        documento.add(linea);
+
+        // Título
+        Paragraph titulo = new Paragraph("CONTRATO DE ALQUILER\n       STRADA",
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16));
+        titulo.setAlignment(Element.ALIGN_CENTER);
+        documento.add(titulo);
+        documento.add(linea);
+        documento.add(new Paragraph(" "));
+
+        // Datos del alquiler
+        String cliente = jTable1.getValueAt(fila, 1).toString();
+        String vehiculo = jTable1.getValueAt(fila, 3).toString();
+        String fechaInicio = jTable1.getValueAt(fila, 4).toString();
+        String dias = jTable1.getValueAt(fila, 5).toString();
+        String deposito = jTable1.getValueAt(fila, 8).toString(); // garantía
+        String estado = jTable1.getValueAt(fila, 12).toString();
+        String total = jTable1.getValueAt(fila, 11).toString();
+
+        documento.add(new Paragraph("Nombre del Cliente : " + cliente,
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph("Vehículo           : " + vehiculo,
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph("Fecha de Inicio    : " + fechaInicio,
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph("Total de Días      : " + dias,
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph("Depósito           : L. " + deposito,
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph("Estado del Alquiler: " + estado,
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph("Total a Pagar      : L. " + total,
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(linea);
+
+        // Declaración
+        documento.add(new Paragraph("DECLARACIÓN",
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+        documento.add(new Paragraph("\nYo, " + cliente + ", acepto las condiciones \n" +
+                "del alquiler del vehículo descrito, así como las tarifas, \n" +
+                "depósitos y responsabilidades establecidas por la empresa \n" +
+                "STRADA. Me comprometo a devolver el vehículo en las mismas \n" +
+                "condiciones en las que fue entregado, salvo el desgaste normal \n" +
+                "por uso.\n\n" +
+                "STRADA se reserva el derecho de aplicar cargos adicionales \n" +
+                "por daño, retraso en la entrega o incumplimiento de las \n" +
+                "normas establecidas en este contrato.",
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(linea);
+
+        // Firmas
+        documento.add(new Paragraph("Firmas",
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+        documento.add(new Paragraph("\nFirma del Cliente: _________________________________",
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph("\nFirma del Gerente: _________________________________",
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(linea);
+
+        // Agradecimiento final
+        Paragraph cierre = new Paragraph("       ¡Gracias por confiar en STRADA!",
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14));
+        cierre.setAlignment(Element.ALIGN_CENTER);
+        documento.add(cierre);
+        documento.add(linea);
+
+        documento.close();
+
+        // Abrir PDF automáticamente
+        File file = new File(ruta);
+        if (file.exists()) {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(file);
+            } else {
+                JOptionPane.showMessageDialog(null, "No se puede abrir automáticamente el PDF.");
+            }
+        }
+
+        JOptionPane.showMessageDialog(null, "PDF generado correctamente en: " + ruta);
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error al generar PDF: " + e.getMessage());
+    }
+}
+
+
+    
+    
+    
+    
+    
+    
 
     
     
@@ -504,7 +653,9 @@ public class FrmAlquiler extends javax.swing.JFrame {
         jLabel21 = new javax.swing.JLabel();
         jLabel22 = new javax.swing.JLabel();
         jLabel23 = new javax.swing.JLabel();
+        btnContrato = new javax.swing.JButton();
         lblRegresar = new javax.swing.JLabel();
+        btnDevolucion = new javax.swing.JButton();
         lblFondoA = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
 
@@ -642,7 +793,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnFactura11MouseClicked(evt);
             }
         });
-        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(370, 650, -1, 70));
+        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(440, 650, -1, 70));
 
         btnRegistrar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Regi.png"))); // NOI18N
         btnRegistrar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -650,7 +801,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnRegistrarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 640, -1, 90));
+        getContentPane().add(btnRegistrar, new org.netbeans.lib.awtextra.AbsoluteConstraints(60, 660, 190, 70));
 
         btnEditar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Editar.png"))); // NOI18N
         btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -658,7 +809,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
                 btnEditarMouseClicked(evt);
             }
         });
-        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 640, -1, 80));
+        getContentPane().add(btnEditar, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 650, -1, 80));
 
         jLabel9.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel9.setForeground(new java.awt.Color(255, 255, 255));
@@ -725,6 +876,23 @@ public class FrmAlquiler extends javax.swing.JFrame {
         jLabel23.setText("Descuento:");
         getContentPane().add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 390, 100, 40));
 
+        btnContrato.setBackground(new java.awt.Color(0, 0, 0));
+        btnContrato.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-devo.png"))); // NOI18N
+        btnContrato.setBorder(null);
+        btnContrato.setContentAreaFilled(false);
+        btnContrato.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btnContrato.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnContratoMouseClicked(evt);
+            }
+        });
+        btnContrato.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnContratoActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnContrato, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 650, 190, 70));
+
         lblRegresar.setFont(new java.awt.Font("Times New Roman", 2, 26)); // NOI18N
         lblRegresar.setForeground(new java.awt.Color(255, 255, 255));
         lblRegresar.setText("Regresar");
@@ -734,6 +902,23 @@ public class FrmAlquiler extends javax.swing.JFrame {
             }
         });
         getContentPane().add(lblRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 40, 100, -1));
+
+        btnDevolucion.setBackground(new java.awt.Color(0, 0, 0));
+        btnDevolucion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-contrato.png"))); // NOI18N
+        btnDevolucion.setBorder(null);
+        btnDevolucion.setContentAreaFilled(false);
+        btnDevolucion.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btnDevolucion.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnDevolucionMouseClicked(evt);
+            }
+        });
+        btnDevolucion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDevolucionActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(840, 650, 190, 70));
 
         lblFondoA.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Alquiler1.png"))); // NOI18N
         lblFondoA.setText("jLabel1");
@@ -791,7 +976,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
 
     private void btnFactura11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnFactura11MouseClicked
 
-        FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idAlqui);
+        FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idAlqui, 2, currentUser);
         menu.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnFactura11MouseClicked
@@ -799,6 +984,28 @@ public class FrmAlquiler extends javax.swing.JFrame {
     private void txtBuscarKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarKeyReleased
         buscarAlquilerPorId();
     }//GEN-LAST:event_txtBuscarKeyReleased
+
+    private void btnContratoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContratoActionPerformed
+        // TODO add your handling code here:
+        // del formulario de alquiler
+        FrmDevolucion devolucion = new FrmDevolucion(currentUser,idVehiculo);
+        devolucion.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnContratoActionPerformed
+
+    private void btnContratoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnContratoMouseClicked
+        FrmDevolucion devolucion = new FrmDevolucion(currentUser,idVehiculo);
+        devolucion.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnContratoMouseClicked
+
+    private void btnDevolucionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnDevolucionMouseClicked
+        generarPDFContratoAlquiler();
+    }//GEN-LAST:event_btnDevolucionMouseClicked
+
+    private void btnDevolucionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDevolucionActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnDevolucionActionPerformed
 
     /**
      * @param args the command line arguments
@@ -818,6 +1025,8 @@ public class FrmAlquiler extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnContrato;
+    private javax.swing.JButton btnDevolucion;
     private javax.swing.JLabel btnEditar;
     private javax.swing.JLabel btnFactura11;
     private javax.swing.JLabel btnRegistrar;

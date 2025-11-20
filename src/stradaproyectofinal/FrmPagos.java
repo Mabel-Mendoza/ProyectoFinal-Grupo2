@@ -185,7 +185,13 @@ public class FrmPagos extends javax.swing.JFrame {
     }
 
     private void registrarPago() {
+
+        if (!validarPago()) {
+            return;
+        }
+
         try {
+            
             String itemE = cmbEmpleado.getSelectedItem().toString();
             int idEmpleado = Integer.parseInt(itemE.split(" - ")[0]);
 
@@ -195,8 +201,7 @@ public class FrmPagos extends javax.swing.JFrame {
             String itemEs = cmbEstado.getSelectedItem().toString();
             int idEstado = Integer.parseInt(itemEs.split(" - ")[0]);
 
-            Date fecha = jDatePago.getDate();
-            java.sql.Date fechaSQL = new java.sql.Date(fecha.getTime());
+            java.sql.Date fechaSQL = new java.sql.Date(jDatePago.getDate().getTime());
 
             String sql = "INSERT INTO planillapagos "
                     + "(idempleado, fechapago, horasextras, pagohorasextras, totalhorasextras, "
@@ -224,17 +229,15 @@ public class FrmPagos extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error al registrar pago: " + e.getMessage());
         }
-        
-        
+
         ut.mostrarDatos(sqlse, jTable1, new String[]{
             "ID Pago", "Nombre", "Apellido", "Fecha Pago",
             "Horas Extras", "Pago por Hora Extra", "Total Horas Extras",
             "IHSS", "RAP", "Total Deducciones", "Salario Neto",
             "Método de Pago", "Estado de Pago"
         });
-
-        
     }
+
     
     
     
@@ -390,9 +393,53 @@ public class FrmPagos extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(null, "Error al actualizar pago: " + e.getMessage());
     }
 }
+    
+    private boolean validarPago() {
 
+        if (cmbEmpleado.getSelectedIndex() <= 0) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar un empleado.");
+            return false;
+        }
+
+        if (cmbPago.getSelectedIndex() <= 0) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar un método de pago.");
+            return false;
+        }
+
+        if (cmbEstado.getSelectedIndex() <= 0) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar un estado.");
+            return false;
+        }
+
+        if (jDatePago.getDate() == null) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar una fecha de pago.");
+            return false;
+        }
+
+        Date fechaSeleccionada = jDatePago.getDate();
+        Date hoy = new Date();
+
+        if (fechaSeleccionada.after(hoy)) {
+            JOptionPane.showMessageDialog(null, "La fecha de pago no puede ser futura.");
+            jDatePago.requestFocus();
+            return false;
+        }
+
+        if (SliderHoras.getValue() < 0) {
+            JOptionPane.showMessageDialog(null, "Las horas extras no pueden ser negativas.");
+            return false;
+        }
+
+        if (totalHorasExtras < 0 || salarioNeto < 0) {
+            JOptionPane.showMessageDialog(null, "Los valores calculados son inválidos. Revise los datos.");
+            return false;
+        }
+
+        return true;
+    }
     
     
+  
     private void buscarPago() {
     String texto = txtBuscar.getText().trim();
     String sqlBusqueda;

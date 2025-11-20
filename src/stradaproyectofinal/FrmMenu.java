@@ -3,6 +3,11 @@ package stradaproyectofinal;
 
 import clases.User;
 import clases.Role;
+import static clases.Role.ADMIN;
+import static clases.Role.AUDITOR;
+import static clases.Role.CONTADOR;
+import static clases.Role.JEFE_ALMACEN;
+import static clases.Role.VENDEDOR;
 import java.awt.Color;
 import javax.swing.JButton;
 
@@ -10,29 +15,9 @@ public class FrmMenu extends javax.swing.JFrame {
 
     private User loggedUser;
 
-    // Colores para estado habilitado/deshabilitado (grisado)
-    private static final Color COLOR_ENABLED_BG  = new Color(153, 0, 0);    // tu rojo
-    private static final Color COLOR_ENABLED_FG  = new Color(255, 253, 253);
-    private static final Color COLOR_DISABLED_BG = new Color(120, 120, 120);// gris
-    private static final Color COLOR_DISABLED_FG = new Color(220, 220, 220);
-
-// Aplica enable/disable + estilo visual para "grisado"
-private void setButtonState(JButton btn, boolean enabled) {
-    btn.setEnabled(enabled);
-    btn.setFocusable(enabled);
-    btn.setBackground(enabled ? COLOR_ENABLED_BG : COLOR_DISABLED_BG);
-    btn.setForeground(enabled ? COLOR_ENABLED_FG : COLOR_DISABLED_FG);
-    // Si usas iconos, podrías también cambiar a un ícono en escala de grises aquí.
-}
-
-
     // Constructor original SIN parámetros (lo deja NetBeans)
     public FrmMenu() {
         initComponents();
-        
-        setResizable(false); 
-
-        
         this.setSize(1366, 768);
         this.setLocationRelativeTo(null);
         applyPermissions(null); // todo gris si no hay usuario
@@ -57,48 +42,47 @@ private void setButtonState(JButton btn, boolean enabled) {
 
     private void applyPermissions(Role role) {
         // 1) Deshabilitar todo por defecto (grisado)
-        setButtonState(btnVehiculos,  false);
-        setButtonState(btnVentas,     false);
-        setButtonState(btnEmpleados,  false);
-        setButtonState(btnAlquiler,   false);
-        setButtonState(btnReporte,    false);
-        setButtonState(btnPagos,      false);
-        setButtonState(btnClientes1,  false);
-        setButtonState(btnDevolucion, false);
+        
+        btnVehiculos.setEnabled(false);
+        btnEmpleados.setEnabled(false);
+        btnAlquiler.setEnabled(false);
+        btnReporte.setEnabled(false);
+        btnPagos.setEnabled(false);
+        btnClientes1.setEnabled(false);
+        btnRegresarr.setEnabled(false);
         
 
         if (role == null) return;
 
         switch (role) {
             case ADMIN:
-                setButtonState(btnVehiculos,  true);
-                setButtonState(btnVentas,     true);
-                setButtonState(btnEmpleados,  true);
-                setButtonState(btnAlquiler,   true);
-                setButtonState(btnReporte,    true);
-                setButtonState(btnPagos,      true);
-                setButtonState(btnClientes1,  true);
-                setButtonState(btnDevolucion, true);
+            btnVehiculos.setEnabled(true);
+            btnEmpleados.setEnabled(true);
+            btnRegresarr.setEnabled(true);
+            btnAlquiler.setEnabled(true);
+            btnReporte.setEnabled(true);
+            btnPagos.setEnabled(true);
+            btnClientes1.setEnabled(true);
                 break;
 
             case JEFE_ALMACEN:
-                setButtonState(btnVehiculos, true);
+                btnVehiculos.setEnabled(true);
                 break;
 
             case AUDITOR:
-                setButtonState(btnReporte, true);
+                btnReporte.setEnabled(true);
                 break;
 
             case CONTADOR:
-                setButtonState(btnPagos,   true);
-                setButtonState(btnReporte, true);
+                btnReporte.setEnabled(true);
+                btnPagos.setEnabled(true);
                 // Cuando tengas botones de Facturas, actívalos aquí también
                 break;
 
             case VENDEDOR:
-                setButtonState(btnClientes1, true);
-                setButtonState(btnAlquiler,  true);
-                setButtonState(btnVentas,    true);
+                btnClientes1.setEnabled(true);
+                btnRegresarr.setEnabled(true);
+                btnAlquiler.setEnabled(true);
                 // Cuando tengas "Factura Alquileres" y "Factura Ventas", actívalos aquí
                 break;
         }
@@ -109,34 +93,19 @@ private void setButtonState(JButton btn, boolean enabled) {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btnDevolucion = new javax.swing.JButton();
         btnVehiculos = new javax.swing.JButton();
-        btnVentas = new javax.swing.JButton();
         btnEmpleados = new javax.swing.JButton();
         btnAlquiler = new javax.swing.JButton();
         btnReporte = new javax.swing.JButton();
         btnPagos = new javax.swing.JButton();
         btnClientes1 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        lblRegresar = new javax.swing.JLabel();
+        btnVentas1 = new javax.swing.JButton();
+        btnRegresarr = new javax.swing.JButton();
         lblFondoM = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        btnDevolucion.setBackground(new java.awt.Color(153, 0, 0));
-        btnDevolucion.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
-        btnDevolucion.setForeground(new java.awt.Color(255, 253, 253));
-        btnDevolucion.setText("Devolucion de alquiler");
-        btnDevolucion.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 4, 4, 0, new java.awt.Color(255, 255, 255)));
-        btnDevolucion.setMaximumSize(new java.awt.Dimension(66, 27));
-        btnDevolucion.setMinimumSize(new java.awt.Dimension(66, 27));
-        btnDevolucion.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnDevolucionActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnDevolucion, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 320, 250, 70));
 
         btnVehiculos.setBackground(new java.awt.Color(153, 0, 0));
         btnVehiculos.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
@@ -151,18 +120,6 @@ private void setButtonState(JButton btn, boolean enabled) {
             }
         });
         getContentPane().add(btnVehiculos, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 170, 250, 70));
-
-        btnVentas.setBackground(new java.awt.Color(153, 0, 0));
-        btnVentas.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
-        btnVentas.setForeground(new java.awt.Color(255, 253, 253));
-        btnVentas.setText("Ventas");
-        btnVentas.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 4, 4, 0, new java.awt.Color(255, 255, 255)));
-        btnVentas.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnVentasActionPerformed(evt);
-            }
-        });
-        getContentPane().add(btnVentas, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 610, 260, 70));
 
         btnEmpleados.setBackground(new java.awt.Color(153, 0, 0));
         btnEmpleados.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
@@ -193,7 +150,7 @@ private void setButtonState(JButton btn, boolean enabled) {
         btnReporte.setBackground(new java.awt.Color(153, 0, 0));
         btnReporte.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
         btnReporte.setForeground(new java.awt.Color(255, 253, 253));
-        btnReporte.setText("Reporte");
+        btnReporte.setText("Reportes");
         btnReporte.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 4, 4, 0, new java.awt.Color(255, 255, 255)));
         btnReporte.setMaximumSize(new java.awt.Dimension(66, 27));
         btnReporte.setMinimumSize(new java.awt.Dimension(66, 27));
@@ -207,7 +164,7 @@ private void setButtonState(JButton btn, boolean enabled) {
                 btnReporteActionPerformed(evt);
             }
         });
-        getContentPane().add(btnReporte, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 610, 260, 70));
+        getContentPane().add(btnReporte, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 470, 260, 70));
 
         btnPagos.setBackground(new java.awt.Color(153, 0, 0));
         btnPagos.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
@@ -221,7 +178,7 @@ private void setButtonState(JButton btn, boolean enabled) {
                 btnPagosActionPerformed(evt);
             }
         });
-        getContentPane().add(btnPagos, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 470, 260, 70));
+        getContentPane().add(btnPagos, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 320, 260, 70));
 
         btnClientes1.setBackground(new java.awt.Color(153, 0, 0));
         btnClientes1.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
@@ -240,15 +197,29 @@ private void setButtonState(JButton btn, boolean enabled) {
         jLabel1.setText("Menú");
         getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 50, 140, 70));
 
-        lblRegresar.setFont(new java.awt.Font("Times New Roman", 2, 26)); // NOI18N
-        lblRegresar.setForeground(new java.awt.Color(255, 255, 255));
-        lblRegresar.setText("Regresar");
-        lblRegresar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblRegresarMouseClicked(evt);
+        btnVentas1.setBackground(new java.awt.Color(153, 0, 0));
+        btnVentas1.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
+        btnVentas1.setForeground(new java.awt.Color(255, 253, 253));
+        btnVentas1.setText("Ventas");
+        btnVentas1.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 4, 4, 0, new java.awt.Color(255, 255, 255)));
+        btnVentas1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnVentas1ActionPerformed(evt);
             }
         });
-        getContentPane().add(lblRegresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 40, 100, -1));
+        getContentPane().add(btnVentas1, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 610, 260, 70));
+
+        btnRegresarr.setBackground(new java.awt.Color(0, 0, 0));
+        btnRegresarr.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 18)); // NOI18N
+        btnRegresarr.setForeground(new java.awt.Color(255, 255, 255));
+        btnRegresarr.setText("Cerrar Sesión");
+        btnRegresarr.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 4, 4, 0, new java.awt.Color(255, 255, 255)));
+        btnRegresarr.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnRegresarrMouseClicked(evt);
+            }
+        });
+        getContentPane().add(btnRegresarr, new org.netbeans.lib.awtextra.AbsoluteConstraints(920, 610, 260, 70));
 
         lblFondoM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Menu12.png"))); // NOI18N
         lblFondoM.setText("jLabel1");
@@ -257,23 +228,11 @@ private void setButtonState(JButton btn, boolean enabled) {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnDevolucionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDevolucionActionPerformed
-        FrmDevolucion ventana = new FrmDevolucion(loggedUser);
-        ventana.setVisible(true);
-        this.dispose();
-    }//GEN-LAST:event_btnDevolucionActionPerformed
-
     private void btnVehiculosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVehiculosActionPerformed
         FrmVehiculos ventana = new FrmVehiculos(loggedUser);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnVehiculosActionPerformed
-
-    private void btnVentasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVentasActionPerformed
-            FrmVentas ventana = new FrmVentas(loggedUser);
-            ventana.setVisible(true);
-            this.dispose();
-    }//GEN-LAST:event_btnVentasActionPerformed
 
     private void btnEmpleadosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEmpleadosActionPerformed
         FrmEmpleados ventana = new FrmEmpleados(loggedUser);
@@ -305,14 +264,18 @@ private void setButtonState(JButton btn, boolean enabled) {
         this.dispose();
     }//GEN-LAST:event_btnClientes1ActionPerformed
 
-    private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        new FrmLogin().setVisible(true);  // en vez de new FrmMenu()
-    dispose();
-    }//GEN-LAST:event_lblRegresarMouseClicked
-
     private void btnReporteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnReporteMouseClicked
         
     }//GEN-LAST:event_btnReporteMouseClicked
+
+    private void btnVentas1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVentas1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnVentas1ActionPerformed
+
+    private void btnRegresarrMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnRegresarrMouseClicked
+        new FrmLogin().setVisible(true);  
+        dispose();
+    }//GEN-LAST:event_btnRegresarrMouseClicked
 
     /**
      * @param args the command line arguments
@@ -352,14 +315,13 @@ private void setButtonState(JButton btn, boolean enabled) {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAlquiler;
     private javax.swing.JButton btnClientes1;
-    private javax.swing.JButton btnDevolucion;
     private javax.swing.JButton btnEmpleados;
     private javax.swing.JButton btnPagos;
+    private javax.swing.JButton btnRegresarr;
     private javax.swing.JButton btnReporte;
     private javax.swing.JButton btnVehiculos;
-    private javax.swing.JButton btnVentas;
+    private javax.swing.JButton btnVentas1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblFondoM;
-    private javax.swing.JLabel lblRegresar;
     // End of variables declaration//GEN-END:variables
 }

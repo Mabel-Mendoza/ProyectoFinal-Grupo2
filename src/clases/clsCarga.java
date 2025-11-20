@@ -42,7 +42,7 @@ public class clsCarga {
         combo.addItem("Seleccione...");
 
         while (rs.next()) {
-            String item = rs.getInt(idColumna) + " - " + rs.getString(nombreColumna);
+            String item = rs.getString(nombreColumna);
             combo.addItem(item); 
         }
 

@@ -10,6 +10,8 @@ import clases.clsConexion;
 import clases.clsUtilidades;
 import clases.clsCarga;
 import clases.Estilos;
+import clases.User;
+import clases.clsEstadoV;
 import java.awt.Image;
 import java.sql.*;
 import javax.swing.ImageIcon;
@@ -31,17 +33,36 @@ import java.io.File;
  */
 public class FrmFacturaAlquiler extends javax.swing.JFrame {
     
+    private User loggedUser;
     clsConexion con = new clsConexion();
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
+    clsEstadoV est = new clsEstadoV();
     private int idAlquiler;
     private double totalAlquiler = 0;
     int idAlq;
+    private double totalProceso = 0;
+    int idProc;
+    int control;
     
-    public FrmFacturaAlquiler(int idAlquiler) {
+    
+    public FrmFacturaAlquiler(int idAlquiler, int control, User user) {
+        this.loggedUser = user;
         initComponents();
         setResizable(false); 
+        
+        this.setLocationRelativeTo(null); 
+        
+        
+        this.idProc = idAlquiler;
+        this.control = control;
+        
+        if (loggedUser != null) {
+            setTitle("Facturación - Sesión: " + loggedUser.getDisplayName() + " (" + loggedUser.getRole() + ")");
+        }
+        
+        
         
         this.idAlq = idAlquiler;
         lblAlquiler.setText(String.valueOf(idAlq)); // opcional, mostrar ID
@@ -63,12 +84,14 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     public FrmFacturaAlquiler() {
         initComponents();
         
+        this.setLocationRelativeTo(null);
+        
         Estilos.aplicarPlaceholder(txtBuscar, "Buscar");
         
         this.idAlquiler = idAlquiler;
         
         this.setSize(1366, 768); 
-         this.setLocationRelativeTo(null);
+        this.setLocationRelativeTo(null);
         
         ImageIcon iconoOriginal = new ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura11.png"));
         Image imagenEscalada = iconoOriginal.getImage().getScaledInstance(
@@ -159,7 +182,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     private void mostrarFacturas() {
     String sql = "SELECT " +
                  "f.idfacturaalquiler, " +
-                 "f.idalquiler AS 'ID Proceso', " +   // 🔥 SE MUESTRA SOLO UN ID
+                 "f.idalquiler AS 'ID Proceso', " +   
                  "f.fechafactura, " +
                  "fp.descripcion AS 'Forma de pago', " +
                  "f.montopagado, " +
@@ -171,12 +194,6 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     ut.mostrarDatos(sql, jTable1, 
         new String[]{"ID Factura", "ID Proceso", "Fecha", "Forma de Pago", "Monto", "Estado"});
 }
-    
-    
-    
-    
-    
-    
     
     
     
@@ -228,7 +245,7 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         documento.add(linea);
 
         documento.add(new Paragraph(" ", FontFactory.getFont(FontFactory.COURIER, 10)));
-        documento.add(new Paragraph("¡GRACIAS POR SU COMPRA!", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+        documento.add(new Paragraph("¡GRACIAS POR SU PREFERENCIA!", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
         documento.add(new Paragraph("Su satisfacción es nuestra prioridad.", FontFactory.getFont(FontFactory.HELVETICA, 12)));
         documento.add(linea);
 
@@ -398,9 +415,9 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu();
-        menu.setVisible(true);
-        dispose();
+        FrmMenu menu = new FrmMenu(loggedUser);   
+        menu.setVisible(true);          
+        dispose(); 
     }//GEN-LAST:event_lblRegresarMouseClicked
 
     private void cmbEstadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbEstadoActionPerformed

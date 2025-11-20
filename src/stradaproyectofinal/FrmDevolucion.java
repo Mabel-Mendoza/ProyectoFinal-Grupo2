@@ -8,6 +8,8 @@ import clases.Estilos;
 import clases.User;
 import clases.clsCarga;
 import clases.clsConexion;
+import clases.clsEstadoV;
+import clases.clsProc;
 import clases.clsUtilidades;
 import java.sql.Connection;
 import clases.clsUtilidades;
@@ -34,13 +36,16 @@ public class FrmDevolucion extends javax.swing.JFrame {
     Connection cn = con.Sql_Conexion();
     clsUtilidades ut = new clsUtilidades();
     clsCarga car = new clsCarga();
+    clsProc pro = new clsProc();
     
     
     
     ButtonGroup grupoDanio = new ButtonGroup(); 
     java.sql.Date fechaMinimaPermitida = null;
     
-    public FrmDevolucion(User user) {
+    int idve;
+    
+    public FrmDevolucion(User user, int idev) {
         
         this.currentUser = user;
 
@@ -49,6 +54,10 @@ public class FrmDevolucion extends javax.swing.JFrame {
         }
         
         initComponents();
+        
+        this.idve = idev;
+        
+        btnFactura11.setEnabled(false);
         
         setResizable(false); 
         
@@ -121,7 +130,9 @@ public class FrmDevolucion extends javax.swing.JFrame {
      
     String sqlMostrar = "SELECT iddevolucion, idalquiler, fechafinal, kilometrajefinal, dano, cargoextra FROM devolucionalquiler";
 
-   
+    clsEstadoV est = new clsEstadoV();
+    int estado = est.obtenerEstadoVehiculo(cn, idve);
+    
     private void cargarIdsAlquiler() {
         try {
             Statement st = cn.createStatement();
@@ -134,6 +145,28 @@ public class FrmDevolucion extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Error al cargar IDs de alquiler: " + e.getMessage());
         }
     }
+    
+    public int obtenerUltimoIdVenta() {
+        int idAlqui = 0;
+        String sql = "SELECT MAX(iddevolucion) AS id FROM devolucionalquiler";
+
+        try (Connection cn = new clsConexion().Sql_Conexion();
+                
+             Statement st = cn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
+            if (rs.next()) {
+                idAlqui = rs.getInt("id");
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al obtener último ID de devolucion: " + e.getMessage());
+        }
+
+        return idAlqui;
+    }
+    
+    private int idAlqui;
 
     
     private void cargarFechaMinima() {
@@ -186,68 +219,50 @@ public class FrmDevolucion extends javax.swing.JFrame {
     this.revalidate();
     this.repaint();
     }
-
     
     private void registrarDevolucion() {
-        if (cmbId.getSelectedItem() == null || jDateFinal.getDate() == null) {
-            JOptionPane.showMessageDialog(null, "Por favor seleccione un alquiler y una fecha.");
-            return;
-        }
+        if (!validarDevolucion()) return; 
 
         String idAlquiler = cmbId.getSelectedItem().toString();
         java.sql.Date fechaFinal = new java.sql.Date(jDateFinal.getDate().getTime());
-        
-        // ✅ Validar que la fecha final no sea antes de la mínima
-        if (fechaMinimaPermitida != null && fechaFinal.before(fechaMinimaPermitida)) {
-            JOptionPane.showMessageDialog(null, 
-                "La fecha de devolución no puede ser antes del " + fechaMinimaPermitida.toString());
-            return;
-        }
-
         int kilometrajeFinal = Integer.parseInt(txtKiloF.getText());
         boolean hayDano = rbtSi.isSelected();
-        String descripcion = null;
+        String descripcion = hayDano ? txtAreaDano.getText().trim() : null;
         Double cargoExtra = null;
-        
+
         if (hayDano) {
-            descripcion = txtAreaDano.getText();
-            try {
-                String sqlVehiculo = "SELECT a.idvehiculo, v.precio FROM alquiler a JOIN vehiculos v ON a.idvehiculo = v.idvehiculo WHERE a.idalquiler = ?";
-                PreparedStatement ps = cn.prepareStatement(sqlVehiculo);
+            try (PreparedStatement ps = cn.prepareStatement(
+                "SELECT a.idvehiculo, v.precio "
+                        + "FROM alquiler a "
+                        + "JOIN vehiculos v ON a.idvehiculo = v.idvehiculo "
+                        + "WHERE a.idalquiler = ?")) {
                 ps.setString(1, idAlquiler);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    double precio = rs.getDouble("precio");
-                    cargoExtra = precio * 0.05;
-                    lblcargo.setText(String.format("%.2f", cargoExtra));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        double precio = rs.getDouble("precio");
+                        cargoExtra = precio * 0.05;
+                        lblcargo.setText(String.format("%.2f", cargoExtra));
+                    }
                 }
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(null, "Error al calcular cargo extra: " + e.getMessage());
+                return;
             }
         }
 
         String sqlInsert = "INSERT INTO devolucionalquiler (idalquiler, fechafinal, kilometrajefinal, dano, cargoextra) VALUES (?, ?, ?, ?, ?)";
-        Object[] parametros = {
-            idAlquiler,
-            fechaFinal,
-            kilometrajeFinal,
-            hayDano ? descripcion : null,
-            cargoExtra
-        };
-        
+        Object[] parametros = { idAlquiler, fechaFinal, kilometrajeFinal, descripcion, cargoExtra };
+
         if (ut.ejecutarActualizacion(sqlInsert, parametros)) {
             JOptionPane.showMessageDialog(null, "Devolución registrada correctamente.");
-            
             actualizarKilometrajeVehiculo(idAlquiler, kilometrajeFinal);
-            
-            ut.mostrarDatos(sqlMostrar, jTable1, new String[]{
-                "ID", "ID Alquiler", "Fecha Final", "Kilometraje Final", "Daño", "Cargo Extra"
-            });
+            ut.mostrarDatos(sqlMostrar, jTable1, new String[]{"ID", "ID Alquiler", "Fecha Final", "Kilometraje Final", "Daño", "Cargo Extra"});
+            idAlqui = obtenerUltimoIdVenta();
+                btnFactura11.setEnabled(true);
         }
     }
-    
-    
-    
+
+        
     
 private void calcularCargoExtra() {
     if (cmbId.getSelectedItem() == null) return;
@@ -335,21 +350,30 @@ private void calcularCargoExtra() {
 
             // Daño (si existe)
             Object danoObj = jTable1.getValueAt(fila, 4);
+
             if (danoObj != null && !danoObj.toString().isEmpty()) {
                 rbtSi.setSelected(true);
-                txtAreaDano.setVisible(true);
+                
+                txtAreaDano.setText(danoObj.toString());
+                jScrollPane2.setVisible(true); // <--- ESTA ES LA CLAVE
                 lblDes.setVisible(true);
                 lblCargoEx.setVisible(true);
                 lblcargo.setVisible(true);
-                txtAreaDano.setText(danoObj.toString());
+
             } else {
                 rbtNo.setSelected(true);
-                txtAreaDano.setVisible(false);
+
+                jScrollPane2.setVisible(false); 
                 lblDes.setVisible(false);
                 lblCargoEx.setVisible(false);
                 lblcargo.setVisible(false);
+
                 txtAreaDano.setText("");
             }
+
+            // Refrescar el layout
+            jScrollPane1.revalidate();
+            jScrollPane1.repaint();
 
             // Cargo extra
             Object cargoObj = jTable1.getValueAt(fila, 5);
@@ -358,6 +382,8 @@ private void calcularCargoExtra() {
             } else {
                 lblcargo.setText("");
             }
+            
+            btnFactura11.setEnabled(true);
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error al cargar los datos seleccionados: " + e.getMessage());
@@ -369,63 +395,126 @@ private void calcularCargoExtra() {
 
     
    private void editar() {
-    int filaSeleccionada = jTable1.getSelectedRow();
+        int filaSeleccionada = jTable1.getSelectedRow();
 
-    if (filaSeleccionada == -1) {
-        JOptionPane.showMessageDialog(null, "Seleccione una devolución para editar.");
-        return;
-    }
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(null, "Seleccione una devolución para editar.");
+            return;
+        }
 
-    // Obtener el id de la devolución
-    int idDevolucion = Integer.parseInt(jTable1.getValueAt(filaSeleccionada, 0).toString());
+        // Validación antes de editar
+        if (!validarEdicionDevolucion()) return;
 
-    String idAlquiler = cmbId.getSelectedItem().toString();
-    java.sql.Date fechaFinal = new java.sql.Date(jDateFinal.getDate().getTime());
-    int kilometrajeFinal = Integer.parseInt(txtKiloF.getText());
-    boolean hayDano = rbtSi.isSelected();
+        // Obtener el id de la devolución
+        int idDevolucion = Integer.parseInt(jTable1.getValueAt(filaSeleccionada, 0).toString());
 
-    String descripcion = hayDano ? txtAreaDano.getText() : null;
-    Double cargoExtra = null;
+        String idAlquiler = cmbId.getSelectedItem().toString();
+        java.sql.Date fechaFinal = new java.sql.Date(jDateFinal.getDate().getTime());
+        int kilometrajeFinal = Integer.parseInt(txtKiloF.getText());
+        boolean hayDano = rbtSi.isSelected();
+        String descripcion = hayDano ? txtAreaDano.getText().trim() : null;
+        Double cargoExtra = null;
 
-    // Si hay daño, calcular el cargo extra nuevamente
-    if (hayDano) {
-        try {
-            String sqlVehiculo = "SELECT v.precio FROM alquiler a JOIN vehiculos v ON a.idvehiculo = v.idvehiculo WHERE a.idalquiler = ?";
-            PreparedStatement ps = cn.prepareStatement(sqlVehiculo);
-            ps.setString(1, idAlquiler);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                double precio = rs.getDouble("precio");
-                cargoExtra = precio * 0.05;
+        // Calcular cargo extra si hay daño
+        if (hayDano) {
+            try (PreparedStatement ps = cn.prepareStatement(
+                    "SELECT v.precio FROM alquiler a JOIN vehiculos v ON a.idvehiculo = v.idvehiculo WHERE a.idalquiler = ?")) {
+                ps.setString(1, idAlquiler);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        double precio = rs.getDouble("precio");
+                        cargoExtra = precio * 0.05;
+                    }
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "Error al calcular cargo extra: " + e.getMessage());
+                return;
             }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al calcular cargo extra: " + e.getMessage());
+        }
+
+        // Actualizar en la base de datos
+        String sql = "UPDATE devolucionalquiler SET idalquiler=?, fechafinal=?, kilometrajefinal=?, dano=?, cargoextra=? WHERE iddevolucion=?";
+        Object[] parametros = { idAlquiler, fechaFinal, kilometrajeFinal, descripcion, cargoExtra, idDevolucion };
+
+        if (ut.ejecutarActualizacion(sql, parametros)) {
+            JOptionPane.showMessageDialog(null, "Devolución actualizada correctamente.");
+            ut.mostrarDatos(sqlMostrar, jTable1, new String[]{"ID", "ID Alquiler", "Fecha Final", "Kilometraje Final", "Daño", "Cargo Extra"});
         }
     }
+   
+   private boolean validarEdicionDevolucion() {
+       
+        String kiloFinal = txtKiloF.getText().trim();
+        if (kiloFinal.isEmpty() || !kiloFinal.matches("\\d+")) {
+            JOptionPane.showMessageDialog(null, "Ingrese un kilometraje final válido (solo números).");
+            txtKiloF.requestFocus();
+            return false;
+        }
 
-    // Actualizar en la base de datos
-    String sql = "UPDATE devolucionalquiler SET idalquiler=?, fechafinal=?, kilometrajefinal=?, dano=?, cargoextra=? WHERE iddevolucion=?";
+        int kilo = Integer.parseInt(kiloFinal);
+        int kiloInicial = Integer.parseInt(txtKiloF.getText().trim()); 
+        if (kilo < kiloInicial) {
+            JOptionPane.showMessageDialog(null, "El kilometraje final no puede ser menor que el inicial.");
+            txtKiloF.requestFocus();
+            return false;
+        }
 
-    Object[] parametros = {
-        idAlquiler,
-        fechaFinal,
-        kilometrajeFinal,
-        descripcion,
-        cargoExtra,
-        idDevolucion
-    };
+        if (rbtSi.isSelected()) {
+            String descripcion = txtAreaDano.getText().trim();
+            if (descripcion.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Debe describir el daño.");
+                txtAreaDano.requestFocus();
+                return false;
+            }
+        }
 
-    if (ut.ejecutarActualizacion(sql, parametros)) {
-        JOptionPane.showMessageDialog(null, "Devolución actualizada correctamente.");
-
-        // Refrescar la tabla
-        ut.mostrarDatos(sqlMostrar, jTable1, new String[]{
-            "ID", "ID Alquiler", "Fecha Final", "Kilometraje Final", "Daño", "Cargo Extra"
-        });
+        return true; 
     }
-}
- 
+
+
+
+    private boolean validarDevolucion() {
+        
+        if (cmbId.getSelectedIndex() <= 0) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar un alquiler.");
+            cmbId.requestFocus();
+            return false;
+        }
+
+        if (jDateFinal.getDate() == null) {
+            JOptionPane.showMessageDialog(null, "Debe seleccionar una fecha de devolución.");
+            jDateFinal.requestFocus();
+            return false;
+        }
+
+        java.util.Date fechaSeleccionada = jDateFinal.getDate();
+
+        if (fechaMinimaPermitida != null && fechaSeleccionada.before(fechaMinimaPermitida)) {
+            JOptionPane.showMessageDialog(null, 
+                "La fecha de devolución no puede ser antes del " + fechaMinimaPermitida.toString());
+            jDateFinal.requestFocus();
+            return false;
+        }
+
+        String kiloFinal = txtKiloF.getText().trim();
+        if (kiloFinal.isEmpty() || !kiloFinal.matches("\\d+")) {
+            JOptionPane.showMessageDialog(null, "Ingrese un kilometraje final válido (solo números).");
+            txtKiloF.requestFocus();
+            return false;
+        }
+
+        if (rbtSi.isSelected()) {
+            String descripcion = txtAreaDano.getText().trim();
+            if (descripcion.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Debe describir el daño.");
+                txtAreaDano.requestFocus();
+                return false;
+            }
+        }
+
+        return true; 
+    }
+    
     
     private void buscarDevolucionPorId() {
     String textoBusqueda = txtBuscar.getText().trim();
@@ -442,11 +531,6 @@ private void calcularCargoExtra() {
     });
 }
 
-
-
-    
-    
-    
     
     
     
@@ -484,6 +568,7 @@ private void calcularCargoExtra() {
         jLabel12 = new javax.swing.JLabel();
         lblDes = new javax.swing.JLabel();
         jLabel23 = new javax.swing.JLabel();
+        btnFactura11 = new javax.swing.JButton();
         jLabel24 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtAreaDano = new javax.swing.JTextArea();
@@ -606,6 +691,18 @@ private void calcularCargoExtra() {
         jLabel23.setText("Kilometraje final:");
         getContentPane().add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 250, 160, 40));
 
+        btnFactura11.setBackground(new java.awt.Color(0, 0, 0));
+        btnFactura11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura.png"))); // NOI18N
+        btnFactura11.setBorder(null);
+        btnFactura11.setContentAreaFilled(false);
+        btnFactura11.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btnFactura11.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnFactura11ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 630, 190, 110));
+
         jLabel24.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel24.setForeground(new java.awt.Color(255, 255, 255));
         jLabel24.setText("daño:");
@@ -631,8 +728,8 @@ private void calcularCargoExtra() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblRegresarMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblRegresarMouseClicked
-        FrmMenu menu = new FrmMenu(currentUser);
-        menu.setVisible(true);
+        FrmAlquiler alq = new FrmAlquiler(currentUser);
+        alq.setVisible(true);
         dispose();
     }//GEN-LAST:event_lblRegresarMouseClicked
 
@@ -660,6 +757,14 @@ private void calcularCargoExtra() {
         buscarDevolucionPorId();
     }//GEN-LAST:event_txtBuscarKeyReleased
 
+    private void btnFactura11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFactura11ActionPerformed
+        // TODO add your handling code here:
+
+        FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idAlqui, 2, currentUser);
+        menu.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnFactura11ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -681,6 +786,7 @@ private void calcularCargoExtra() {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel btnEditar;
+    private javax.swing.JButton btnFactura11;
     private javax.swing.JLabel btnRegistrar;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JComboBox<String> cmbId;

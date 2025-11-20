@@ -108,9 +108,9 @@ public class FrmVentas extends javax.swing.JFrame {
 
         // Descuentos: 0 = sin descuento, 1 = Tercera Edad (15%), 2 = Promoción (10%)
         cmbDescuento.removeAllItems();
-        cmbDescuento.addItem("0 - Sin descuento (0%)");
-        cmbDescuento.addItem("1 - Tercera Edad (15%)");
-        cmbDescuento.addItem("2 - Promoción (10%)");
+        cmbDescuento.addItem("Sin descuento");
+        cmbDescuento.addItem("Tercera Edad");
+        cmbDescuento.addItem("Promoción");
 
 
         // Mostrar datos
@@ -774,9 +774,11 @@ private void buscarVentaPorId() {
 
     private void btnFactura11MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnFactura11MouseClicked
        
-       FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idVent);
+       FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idVent, 2, currentUser);
        menu.setVisible(true);
         this.dispose();
+        
+        
         
         
 
