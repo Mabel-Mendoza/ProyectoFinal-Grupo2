@@ -42,13 +42,16 @@ public class clsCarga {
         combo.addItem("Seleccione...");
 
         while (rs.next()) {
-            String item = rs.getString(nombreColumna);
-            combo.addItem(item); 
+            int id = rs.getInt(idColumna);
+            String nombre = rs.getString(nombreColumna);
+
+            combo.addItem(id + " - " + nombre);   // ← **ESTO ES LO QUE NECESITAS**
         }
 
     } catch (SQLException ex) {
         JOptionPane.showMessageDialog(null, "Error al cargar combo: " + ex.getMessage());
     }
 }
+
     
 }

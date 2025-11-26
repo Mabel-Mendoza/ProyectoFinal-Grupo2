@@ -555,6 +555,7 @@ txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         rbtnfem = new javax.swing.JRadioButton();
         rbtnmas = new javax.swing.JRadioButton();
         txtnombre = new javax.swing.JTextField();
@@ -596,11 +597,13 @@ txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
+        buttonGroup1.add(rbtnfem);
         rbtnfem.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 24)); // NOI18N
         rbtnfem.setForeground(new java.awt.Color(242, 242, 242));
         rbtnfem.setText("Femenino");
         getContentPane().add(rbtnfem, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 280, -1, -1));
 
+        buttonGroup1.add(rbtnmas);
         rbtnmas.setFont(new java.awt.Font("PMingLiU-ExtB", 1, 24)); // NOI18N
         rbtnmas.setForeground(new java.awt.Color(242, 242, 242));
         rbtnmas.setText("Masculino");
@@ -849,6 +852,7 @@ txtCorreo.addKeyListener(new java.awt.event.KeyAdapter() {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel btnEditar;
     private javax.swing.JLabel btnRegistrar;
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox chkcred;
     private javax.swing.JComboBox<String> cmbJornada;
     private javax.swing.JComboBox<String> cmbPuesto;

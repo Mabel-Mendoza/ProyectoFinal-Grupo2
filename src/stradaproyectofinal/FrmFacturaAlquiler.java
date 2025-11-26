@@ -26,6 +26,8 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.awt.Desktop;
 import java.io.File;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  *
@@ -50,6 +52,20 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     public FrmFacturaAlquiler(int idAlquiler, int control, User user) {
         this.loggedUser = user;
         initComponents();
+        
+        
+        txtBuscar.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyReleased(java.awt.event.KeyEvent evt) {
+            buscarFactura();
+        }
+    });
+
+        
+        Estilos.aplicarPlaceholder(txtBuscar, "Buscar devolución por ID");
+        
+        
+        
         setResizable(false); 
         
         this.setLocationRelativeTo(null); 
@@ -239,16 +255,98 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
         documento.add(new Paragraph(String.format("Fecha          : %s", fecha), FontFactory.getFont(FontFactory.COURIER, 12)));
         documento.add(new Paragraph(String.format("Forma de Pago  : %s", formaPago), FontFactory.getFont(FontFactory.COURIER, 12)));
 
-        documento.add(new Paragraph("----------------------------------------", FontFactory.getFont(FontFactory.COURIER_BOLD, 12)));
-        documento.add(new Paragraph(String.format("Monto          : L. %s", monto), FontFactory.getFont(FontFactory.COURIER, 12)));
-        documento.add(new Paragraph(String.format("Estado         : %s", estado), FontFactory.getFont(FontFactory.COURIER, 12)));
-        documento.add(linea);
+       // documento.add(new Paragraph("----------------------------------------", FontFactory.getFont(FontFactory.COURIER_BOLD, 12)));
+        
+        
 
-        documento.add(new Paragraph(" ", FontFactory.getFont(FontFactory.COURIER, 10)));
-        documento.add(new Paragraph("¡GRACIAS POR SU PREFERENCIA!", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
-        documento.add(new Paragraph("Su satisfacción es nuestra prioridad.", FontFactory.getFont(FontFactory.HELVETICA, 12)));
-        documento.add(linea);
 
+         // =====================================================
+         //      DETECTAR SI PROCESO ES VENTA O ALQUILER
+         // =====================================================
+
+         // 1️⃣ Buscar en ventas primero
+         String sqlVenta = "SELECT v.precioventa, v.descuentoventa, v.isv " +
+                           "FROM ventas v WHERE v.idventa = ?";
+
+         PreparedStatement ps = cn.prepareStatement(sqlVenta);
+         ps.setString(1, idProceso);
+         ResultSet rs = ps.executeQuery();
+
+         if (rs.next()) {
+             // ==================== ES UNA VENTA ====================
+             documento.add(new Paragraph("----------------------------------------",
+                     FontFactory.getFont(FontFactory.COURIER_BOLD, 12)));
+             documento.add(new Paragraph("DETALLES:",
+                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+             documento.add(new Paragraph("----------------------------------------",
+                     FontFactory.getFont(FontFactory.COURIER_BOLD, 12)));
+             documento.add(new Paragraph(String.format("Descuento       : L. %,.2f", rs.getDouble("descuentoventa")),
+                     FontFactory.getFont(FontFactory.COURIER, 12)));
+             double isvDouble = rs.getDouble("isv");
+
+            // Formatear con coma en miles y punto en decimales
+            NumberFormat formato = NumberFormat.getNumberInstance(Locale.US);
+            formato.setMinimumFractionDigits(2);
+            formato.setMaximumFractionDigits(2);
+
+            String isvFormateado = formato.format(isvDouble);
+
+            // Agregar al documento
+            documento.add(new Paragraph(String.format("ISV             : L. %s", isvFormateado),
+                    FontFactory.getFont(FontFactory.COURIER, 12)));
+         } else {
+             // ==================== ES ALQUILER ====================
+             String sqlAlquiler = "SELECT a.fechainicio, a.totaldias, a.preciopordia, " +
+                                  "a.subtotal, a.garantia, a.isv, a.descuentoalquiler " +
+                                  "FROM alquiler a WHERE a.idalquiler = ?";
+
+             ps = cn.prepareStatement(sqlAlquiler);
+             ps.setString(1, idProceso);
+             rs = ps.executeQuery();
+
+             if (rs.next()) {
+                 documento.add(new Paragraph("----------------------------------------",
+                         FontFactory.getFont(FontFactory.COURIER_BOLD, 12)));
+                 documento.add(new Paragraph("DETALLES:",
+                         FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+                 documento.add(new Paragraph("----------------------------------------",
+                         FontFactory.getFont(FontFactory.COURIER_BOLD, 12)));
+
+                 documento.add(new Paragraph(String.format("Fecha Inicio    : %s", rs.getString("fechainicio")),
+                         FontFactory.getFont(FontFactory.COURIER, 12)));
+                 documento.add(new Paragraph(String.format("Total Días      : %s", rs.getString("totaldias")),
+                         FontFactory.getFont(FontFactory.COURIER, 12)));
+
+                 documento.add(new Paragraph(String.format("Precio x Día    : L. %,.2f", rs.getDouble("preciopordia")),
+                         FontFactory.getFont(FontFactory.COURIER, 12)));
+                 documento.add(new Paragraph(String.format("Subtotal        : L. %,.2f", rs.getDouble("subtotal")),
+                         FontFactory.getFont(FontFactory.COURIER, 12)));
+                 documento.add(new Paragraph(String.format("Garantía        : L. %,.2f", rs.getDouble("garantia")),
+                         FontFactory.getFont(FontFactory.COURIER, 12)));
+                 documento.add(new Paragraph(String.format("ISV             : L. %,.2f", rs.getDouble("isv")),
+                         FontFactory.getFont(FontFactory.COURIER, 12)));
+                 documento.add(new Paragraph(String.format("Descuento       : L. %,.2f", rs.getDouble("descuentoalquiler")),
+                         FontFactory.getFont(FontFactory.COURIER, 12)));
+             }
+         }
+         
+         // FORMATO DE MILES PARA EL MONTO QUE YA TIENES
+         
+        double montoDouble = Double.parseDouble(monto);
+
+        // Crear un NumberFormat para US (coma en miles y punto en decimales)
+        NumberFormat formato = NumberFormat.getNumberInstance(Locale.US);
+        formato.setMinimumFractionDigits(2);
+        formato.setMaximumFractionDigits(2);
+
+        String montoFormateado = formato.format(montoDouble);
+
+        documento.add(new Paragraph(String.format("Monto pagado   : L. %s", montoFormateado),
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+        documento.add(new Paragraph(String.format("Estado         : %s", estado),
+                FontFactory.getFont(FontFactory.COURIER, 12)));
+
+       
         documento.close();
 
         // ----- Abrir PDF automáticamente -----
@@ -266,6 +364,36 @@ public class FrmFacturaAlquiler extends javax.swing.JFrame {
     } catch (Exception e) {
         JOptionPane.showMessageDialog(null, "Error al generar PDF: " + e.getMessage());
     }
+}
+    
+    private void buscarFactura() {
+    String texto = txtBuscar.getText().trim();
+    String sqlBusqueda;
+
+    // Consulta base (como sqlse en pagos)
+    String sqlBase = "SELECT " +
+                     "f.idfacturaalquiler, " +
+                     "f.idalquiler AS 'ID Proceso', " +
+                     "f.fechafactura, " +
+                     "fp.descripcion AS 'Forma de pago', " +
+                     "f.montopagado, " +
+                     "ef.descripcion AS 'Estado' " +
+                     "FROM facturaalquiler f " +
+                     "JOIN formapago fp ON f.idformapago = fp.idformapago " +
+                     "JOIN estadofactura ef ON f.idestadofactura = ef.idestadofactura";
+
+    if (texto.isEmpty()) {
+        // mostrar todas las facturas
+        sqlBusqueda = sqlBase;
+    } else {
+        // búsqueda por ID de factura (numérico)
+        sqlBusqueda = sqlBase + " WHERE f.idfacturaalquiler LIKE '%" + texto + "%'";
+    }
+
+    ut.mostrarDatos(sqlBusqueda, jTable1, new String[]{
+        "ID Factura", "ID Proceso", "Fecha",
+        "Forma de Pago", "Monto", "Estado"
+    });
 }
 
     

@@ -645,11 +645,11 @@ private void buscarVehiculoPorPlaca() {
                 txtBuscarKeyReleased(evt);
             }
         });
-        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 110, 530, -1));
+        getContentPane().add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 110, 580, -1));
 
         jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-buscar.png"))); // NOI18N
         jLabel17.setText("jLabel17");
-        getContentPane().add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(1040, 70, 140, 90));
+        getContentPane().add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(1080, 70, 140, 90));
 
         lblFondoV.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Vehi1.png"))); // NOI18N
         lblFondoV.setText("Buscar");

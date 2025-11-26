@@ -53,6 +53,9 @@ public class FrmAlquiler extends javax.swing.JFrame {
     double descuento = 0;
     double total = 0;
     double precioVehiculo = 0;
+    
+    private int idVehiculo = -1; // valor inicial inválido
+
 
     // --- Constructor SIN usuario (evita usarlo en flujo real) ---
     public FrmAlquiler() {
@@ -145,7 +148,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
         }
     }
     
-      int idVehiculo = obtenerIdVehiculoSeleccionado(); 
+     // int idVehiculo = obtenerIdVehiculoSeleccionado(); 
 
     // Listener corto
     private static class SimpleDocListener implements DocumentListener {
@@ -171,11 +174,11 @@ public class FrmAlquiler extends javax.swing.JFrame {
     // Cargar precio diario según vehículo
      private void cargarPrecioVehiculo() {
         try {
-            Object sel = cmbVehiculo.getSelectedItem();
-            if (sel == null) return;
+        Object sel = cmbVehiculo.getSelectedItem();
+        if (sel == null) return;
 
-            String item = sel.toString();
-            int idVehiculo = Integer.parseInt(item.split(" - ")[0].trim());
+        String item = sel.toString();
+        idVehiculo = Integer.parseInt(item.split(" - ")[0].trim());
 
             String sql = "SELECT precio, kilometraje FROM vehiculos WHERE idvehiculo=" + idVehiculo;
             Statement st = cn.createStatement();

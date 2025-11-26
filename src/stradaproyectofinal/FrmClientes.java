@@ -404,6 +404,7 @@ private void buscarClientePorIdentidad() {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         txtTelefono = new javax.swing.JTextField();
         txtDireccion = new javax.swing.JTextField();
         txtNombre = new javax.swing.JTextField();
@@ -568,11 +569,13 @@ private void buscarClientePorIdentidad() {
         cmbsseg.setFont(new java.awt.Font("Times New Roman", 2, 14)); // NOI18N
         getContentPane().add(cmbsseg, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 550, 170, 30));
 
+        buttonGroup1.add(rbtfem);
         rbtfem.setFont(new java.awt.Font("PMingLiU-ExtB", 2, 18)); // NOI18N
         rbtfem.setForeground(new java.awt.Color(255, 255, 255));
         rbtfem.setText("Femenino");
         getContentPane().add(rbtfem, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 360, 90, 30));
 
+        buttonGroup1.add(rbtnmas);
         rbtnmas.setFont(new java.awt.Font("PMingLiU-ExtB", 2, 18)); // NOI18N
         rbtnmas.setForeground(new java.awt.Color(255, 255, 255));
         rbtnmas.setText("Masculino");
@@ -650,6 +653,7 @@ private void buscarClientePorIdentidad() {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField TxtApellido;
     private javax.swing.JLabel btnRegistrar;
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JComboBox<String> cmbsseg;
     private com.toedter.calendar.JDateChooser jDatenacimiento;
     private javax.swing.JLabel jLabel10;

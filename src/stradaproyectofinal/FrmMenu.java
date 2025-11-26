@@ -18,6 +18,7 @@ public class FrmMenu extends javax.swing.JFrame {
     // Constructor original SIN parámetros (lo deja NetBeans)
     public FrmMenu() {
         initComponents();
+        setResizable(false);
         this.setSize(1366, 768);
         this.setLocationRelativeTo(null);
         applyPermissions(null); // todo gris si no hay usuario
@@ -269,7 +270,9 @@ public class FrmMenu extends javax.swing.JFrame {
     }//GEN-LAST:event_btnReporteMouseClicked
 
     private void btnVentas1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVentas1ActionPerformed
-        // TODO add your handling code here:
+        FrmVentas ventana = new FrmVentas(loggedUser);
+        ventana.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_btnVentas1ActionPerformed
 
     private void btnRegresarrMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnRegresarrMouseClicked

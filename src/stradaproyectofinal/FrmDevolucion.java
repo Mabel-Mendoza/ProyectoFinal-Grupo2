@@ -13,6 +13,10 @@ import clases.clsProc;
 import clases.clsUtilidades;
 import java.sql.Connection;
 import clases.clsUtilidades;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Paragraph;
 import java.awt.Image;
 import javax.swing.ImageIcon;
 import java.sql.Connection;
@@ -20,7 +24,9 @@ import javax.swing.JOptionPane;
 import com.toedter.calendar.JDateChooser;
 import java.text.DecimalFormat;
 import java.sql.*;
+import java.text.NumberFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import javax.swing.*;
 
 
@@ -57,7 +63,7 @@ public class FrmDevolucion extends javax.swing.JFrame {
         
         this.idve = idev;
         
-        btnFactura11.setEnabled(false);
+        btnCompro.setEnabled(false);
         
         setResizable(false); 
         
@@ -258,7 +264,7 @@ public class FrmDevolucion extends javax.swing.JFrame {
             actualizarKilometrajeVehiculo(idAlquiler, kilometrajeFinal);
             ut.mostrarDatos(sqlMostrar, jTable1, new String[]{"ID", "ID Alquiler", "Fecha Final", "Kilometraje Final", "Daño", "Cargo Extra"});
             idAlqui = obtenerUltimoIdVenta();
-                btnFactura11.setEnabled(true);
+                btnCompro.setEnabled(true);
         }
     }
 
@@ -383,7 +389,7 @@ private void calcularCargoExtra() {
                 lblcargo.setText("");
             }
             
-            btnFactura11.setEnabled(true);
+            btnCompro.setEnabled(true);
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error al cargar los datos seleccionados: " + e.getMessage());
@@ -531,7 +537,96 @@ private void calcularCargoExtra() {
     });
 }
 
-    
+   
+    private void generarComprobante() {
+    if (cmbId.getSelectedItem() == null) {
+        JOptionPane.showMessageDialog(this, "Seleccione un alquiler primero.");
+        return;
+    }
+
+    String idAlquiler = cmbId.getSelectedItem().toString();
+    String fechaEntrega = jDateFinal.getDate() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(jDateFinal.getDate()) : "";
+    String kilometrajeFinal = txtKiloF.getText();
+    String descripcionDano = rbtSi.isSelected() ? txtAreaDano.getText().trim() : "N/A";
+    String cargoExtra = lblcargo.getText().replace("Cargo extra: L. ", "").trim();
+
+    String rutaPDF = "Comprobante_Devolucion_" + idAlquiler + ".pdf";
+
+    try {
+        com.itextpdf.text.Document documento = new com.itextpdf.text.Document();
+        com.itextpdf.text.pdf.PdfWriter.getInstance(documento, new java.io.FileOutputStream(rutaPDF));
+        documento.open();
+
+        // Fuentes
+        com.itextpdf.text.Font titulo = com.itextpdf.text.FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
+        com.itextpdf.text.Font subTitulo = com.itextpdf.text.FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+        com.itextpdf.text.Font normal = com.itextpdf.text.FontFactory.getFont(FontFactory.COURIER, 12);
+
+        // Encabezado
+        Paragraph linea = new Paragraph("========================================", 
+                FontFactory.getFont(FontFactory.COURIER_BOLD, 12));
+        linea.setAlignment(Element.ALIGN_CENTER);
+        documento.add(linea);
+
+        Paragraph encabezado = new Paragraph("STRADA - Alquiler de Vehículos", titulo);
+        encabezado.setAlignment(Element.ALIGN_CENTER);
+        documento.add(encabezado);
+
+        Paragraph comprobante = new Paragraph("*** COMPROBANTE DE DEVOLUCIÓN ***", subTitulo);
+        comprobante.setAlignment(Element.ALIGN_CENTER);
+        documento.add(comprobante);
+        documento.add(linea);
+        documento.add(new Paragraph(" "));
+
+        // Datos principales
+        documento.add(new Paragraph(String.format("ID Alquiler       : %s", idAlquiler), normal));
+        documento.add(new Paragraph(String.format("Fecha de entrega  : %s", fechaEntrega), normal));
+        documento.add(new Paragraph(String.format("Kilometraje final : %s km", kilometrajeFinal), normal));
+        documento.add(new Paragraph(String.format("Descripción daño  : %s", descripcionDano), normal));
+        
+        
+        
+        double cargoDouble = 0;
+try {
+    cargoDouble = Double.parseDouble(cargoExtra);
+} catch (NumberFormatException e) {
+    cargoDouble = 0; // en caso de que esté vacío o inválido
+}
+
+NumberFormat formato = NumberFormat.getNumberInstance(Locale.US);
+formato.setMinimumFractionDigits(2);
+formato.setMaximumFractionDigits(2);
+
+String cargoFormateado = formato.format(cargoDouble);
+
+// Añadir al PDF
+documento.add(new Paragraph(String.format("Cargo extra       : L. %s", cargoFormateado),
+        FontFactory.getFont(FontFactory.COURIER, 12)));
+        
+        documento.add(new Paragraph(" "));
+
+        // Línea separadora
+        documento.add(linea);
+        documento.add(new Paragraph(" "));
+        
+        // Mensaje de cierre
+        Paragraph mensaje = new Paragraph("¡Gracias por su confianza en Strada!", subTitulo);
+        mensaje.setAlignment(Element.ALIGN_CENTER);
+        documento.add(mensaje);
+
+        documento.close();
+
+        // Abrir PDF automáticamente
+        if (java.awt.Desktop.isDesktopSupported()) {
+            java.awt.Desktop.getDesktop().browse(new java.io.File(rutaPDF).toURI());
+        }
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error al generar comprobante: " + e.getMessage());
+    }
+}
+
+
     
     
      
@@ -550,6 +645,7 @@ private void calcularCargoExtra() {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
+        buttonGroup2 = new javax.swing.ButtonGroup();
         jLabel6 = new javax.swing.JLabel();
         txtBuscar = new javax.swing.JTextField();
         lblRegresar = new javax.swing.JLabel();
@@ -568,7 +664,7 @@ private void calcularCargoExtra() {
         jLabel12 = new javax.swing.JLabel();
         lblDes = new javax.swing.JLabel();
         jLabel23 = new javax.swing.JLabel();
-        btnFactura11 = new javax.swing.JButton();
+        btnCompro = new javax.swing.JButton();
         jLabel24 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         txtAreaDano = new javax.swing.JTextArea();
@@ -691,17 +787,22 @@ private void calcularCargoExtra() {
         jLabel23.setText("Kilometraje final:");
         getContentPane().add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 250, 160, 40));
 
-        btnFactura11.setBackground(new java.awt.Color(0, 0, 0));
-        btnFactura11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Factura.png"))); // NOI18N
-        btnFactura11.setBorder(null);
-        btnFactura11.setContentAreaFilled(false);
-        btnFactura11.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        btnFactura11.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnFactura11ActionPerformed(evt);
+        btnCompro.setBackground(new java.awt.Color(0, 0, 0));
+        btnCompro.setIcon(new javax.swing.ImageIcon(getClass().getResource("/stradaproyectofinal/Img-Compro.png"))); // NOI18N
+        btnCompro.setBorder(null);
+        btnCompro.setContentAreaFilled(false);
+        btnCompro.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        btnCompro.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnComproMouseClicked(evt);
             }
         });
-        getContentPane().add(btnFactura11, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 630, 190, 110));
+        btnCompro.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnComproActionPerformed(evt);
+            }
+        });
+        getContentPane().add(btnCompro, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 630, 190, 110));
 
         jLabel24.setFont(new java.awt.Font("Times New Roman", 0, 22)); // NOI18N
         jLabel24.setForeground(new java.awt.Color(255, 255, 255));
@@ -757,13 +858,13 @@ private void calcularCargoExtra() {
         buscarDevolucionPorId();
     }//GEN-LAST:event_txtBuscarKeyReleased
 
-    private void btnFactura11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFactura11ActionPerformed
-        // TODO add your handling code here:
+    private void btnComproActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnComproActionPerformed
+      generarComprobante();
+    }//GEN-LAST:event_btnComproActionPerformed
 
-        FrmFacturaAlquiler menu = new FrmFacturaAlquiler(idAlqui, 2, currentUser);
-        menu.setVisible(true);
-        this.dispose();
-    }//GEN-LAST:event_btnFactura11ActionPerformed
+    private void btnComproMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnComproMouseClicked
+        generarComprobante();
+    }//GEN-LAST:event_btnComproMouseClicked
 
     /**
      * @param args the command line arguments
@@ -785,10 +886,11 @@ private void calcularCargoExtra() {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnCompro;
     private javax.swing.JLabel btnEditar;
-    private javax.swing.JButton btnFactura11;
     private javax.swing.JLabel btnRegistrar;
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.ButtonGroup buttonGroup2;
     private javax.swing.JComboBox<String> cmbId;
     private com.toedter.calendar.JDateChooser jDateFinal;
     private javax.swing.JLabel jLabel12;

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="null" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="9305a425-6a0f-4575-a12c-9a3fd63738eb">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#F0EFEF"/>
+		</conditionalStyle>
+	</style>
+	<queryString language="SQL">
+		<![CDATA[SELECT
+     vista_devolucion.`iddevolucion` AS vista_devolucion_iddevolucion,
+     vista_devolucion.`fechainicio` AS vista_devolucion_fechainicio,
+     vista_devolucion.`fechafinal` AS vista_devolucion_fechafinal,
+     vista_devolucion.`kilometrajefinal` AS vista_devolucion_kilometrajefinal,
+     vista_devolucion.`dano` AS vista_devolucion_dano,
+     vista_devolucion.`cargoextra` AS vista_devolucion_cargoextra,
+     vista_devolucion.`vehiculo` AS vista_devolucion_vehiculo
+FROM
+     `vista_devolucion` vista_devolucion]]>
+	</queryString>
+	<field name="vista_devolucion_iddevolucion" class="java.lang.Integer"/>
+	<field name="vista_devolucion_fechainicio" class="java.sql.Date"/>
+	<field name="vista_devolucion_fechafinal" class="java.sql.Date"/>
+	<field name="vista_devolucion_kilometrajefinal" class="java.lang.Integer"/>
+	<field name="vista_devolucion_dano" class="java.lang.String"/>
+	<field name="vista_devolucion_cargoextra" class="java.math.BigDecimal"/>
+	<field name="vista_devolucion_vehiculo" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="102" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="721" height="66" backcolor="#000000" uuid="eee0e66a-20b7-42ed-9a89-1d1b92923f85"/>
+				<staticText>
+					<reportElement style="Title" x="0" y="0" width="512" height="66" uuid="d9036906-070a-4856-9b67-c44302ad5aa8"/>
+					<box topPadding="4" leftPadding="4" bottomPadding="4" rightPadding="4"/>
+					<textElement verticalAlignment="Bottom">
+						<font isBold="false"/>
+					</textElement>
+					<text><![CDATA[Reporte de devoluciones]]></text>
+				</staticText>
+				<staticText>
+					<reportElement style="SubTitle" x="600" y="37" width="86" height="29" uuid="b24f3769-b3a1-4adb-90ae-ba562db0ba48"/>
+					<textElement textAlignment="Right">
+						<font size="22" isBold="false"/>
+					</textElement>
+					<text><![CDATA[Strada]]></text>
+				</staticText>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="70" width="721" height="32" forecolor="#000000" backcolor="#CC0000" uuid="ae830539-cdcb-4652-99e1-7b20b22f543a"/>
+				<textField pattern="EEEEE dd MMMMM yyyy">
+					<reportElement x="553" y="12" width="144" height="20" forecolor="#FFFFFF" uuid="c16b8a70-165e-4000-bca0-befa5fffdb92"/>
+					<textElement textAlignment="Right">
+						<font size="12"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="18" splitType="Stretch">
+			<staticText>
+				<reportElement style="Column header" x="0" y="0" width="26" height="18" forecolor="#000000" uuid="8ea60b1f-f37d-4ea0-a8b5-9d000fe6e360"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[Id]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="54" y="0" width="87" height="18" forecolor="#000000" uuid="b57195d7-dc77-47e2-8bed-257ee2ae53b6"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[fecha de inicio]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="159" y="0" width="67" height="18" forecolor="#000000" uuid="43e72bfd-7f11-467d-b068-706ea186f3e0"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[fecha final]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="257" y="0" width="113" height="18" forecolor="#000000" uuid="6ce68bd8-b121-462a-a6e6-59fee5afe0bc"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[kilometraje final]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="462" y="0" width="32" height="18" forecolor="#000000" uuid="c5f0d315-60b8-4376-98e6-6a3d9dfab69c"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[dano]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="584" y="0" width="80" height="18" forecolor="#000000" uuid="38ca234b-f6c8-4527-8df5-6eb45a0008fd"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[cargo extra]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="677" y="0" width="55" height="18" forecolor="#000000" uuid="f4c7991b-88cd-442b-9d56-66ecfe92dcb9"/>
+				<textElement>
+					<font isBold="false"/>
+				</textElement>
+				<text><![CDATA[vehiculo]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="18" splitType="Stretch">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="0" y="0" width="797" height="18" uuid="fea8e913-f299-4174-b02c-73be669751b8"/>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" positionType="Float" x="0" y="0" width="44" height="18" uuid="9c5b2979-75e8-451c-9622-f61c715beaa0"/>
+					<textElement>
+						<font size="14"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vista_devolucion_iddevolucion}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" positionType="Float" x="54" y="0" width="87" height="18" uuid="57c885b7-900c-46c9-a381-e4437ae80851"/>
+					<textElement>
+						<font size="14"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vista_devolucion_fechainicio}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" positionType="Float" x="159" y="0" width="90" height="18" uuid="6bba9240-2a86-4b91-89d0-0b6fe0287913"/>
+					<textElement>
+						<font size="14"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vista_devolucion_fechafinal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" positionType="Float" x="257" y="0" width="100" height="18" uuid="c5fdeae1-cc85-4417-8d93-05ffe8039162"/>
+					<textElement>
+						<font size="14"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vista_devolucion_kilometrajefinal}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" positionType="Float" x="370" y="0" width="203" height="18" uuid="d103ea65-b43b-4b06-b9a0-5cb117752bd8"/>
+					<textElement>
+						<font size="14"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vista_devolucion_dano}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" positionType="Float" x="584" y="0" width="80" height="18" uuid="9bb55e29-055a-4c06-a79e-b6946b3df7ce"/>
+					<textElement>
+						<font size="14"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vista_devolucion_cargoextra}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" positionType="Float" x="677" y="0" width="113" height="18" uuid="92254d2d-43aa-493d-b95d-b700556485e4"/>
+					<textElement>
+						<font size="14"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{vista_devolucion_vehiculo}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="7" splitType="Stretch">
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="3" width="555" height="1" uuid="8d828341-9cf0-4b07-b86c-d0124c919a21"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#999999"/>
+				</graphicElement>
+			</line>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="25" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="802" height="25" forecolor="#D0B48E" backcolor="#000000" uuid="4a3b9916-0c49-4475-882d-e027f9e0a3ec"/>
+				<textField evaluationTime="Report">
+					<reportElement style="Column header" x="757" y="3" width="40" height="20" forecolor="#FFFFFF" uuid="1e73c8fa-3d48-4fd7-89b9-24b86a8f4fe2"/>
+					<textElement verticalAlignment="Middle">
+						<font size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Column header" x="677" y="3" width="80" height="20" forecolor="#FFFFFF" uuid="a5b2c62d-4e73-40cc-b6e9-21f0a3f24f5f"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+				</textField>
+				<textField pattern="EEEEE dd MMMMM yyyy">
+					<reportElement style="Column header" x="2" y="3" width="197" height="20" forecolor="#FFFFFF" uuid="eb2b6a85-02dd-4f95-a310-2e8663e643dc"/>
+					<textElement verticalAlignment="Middle">
+						<font size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>
