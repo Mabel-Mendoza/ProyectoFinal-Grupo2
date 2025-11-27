@@ -30,6 +30,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 
+import java.sql.PreparedStatement;
 
 
 /**
@@ -120,7 +121,7 @@ public class FrmAlquiler extends javax.swing.JFrame {
         // Tabla
         ut.mostrarDatos(sqlse, jTable1, new String[]{
             "ID", "Cliente", "Empleado", "Vehículo", "Fecha Inicio", "Días", "Precio/Día",
-            "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Estado"
+            "Subtotal", "Garantía", "ISV", "Descuento", "Total", "Kilometraje"
         });
 
         // Eventos de recálculo
@@ -252,6 +253,47 @@ public class FrmAlquiler extends javax.swing.JFrame {
     }
     
     private int idAlqui;
+    
+    
+    
+    
+    private boolean verificarVehiculoDisponible(int idVehiculo) {
+    String sql = "SELECT idestadovehiculo FROM vehiculos WHERE idvehiculo = ?";
+
+    try (PreparedStatement ps = cn.prepareStatement(sql)) {
+        ps.setInt(1, idVehiculo);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            int estado = rs.getInt("idestadovehiculo");
+            // 1 = Disponible | 2 = Vendido | 3 = Alquilado
+            return estado == 1;
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null,
+            "Error verificando estado del vehículo: " + e.getMessage());
+    }
+
+    return false;
+}
+    
+    
+    private void actualizarEstadoVehiculo(int idVehiculo, int nuevoEstado) {
+    String sql = "UPDATE vehiculos SET idestadovehiculo = ? WHERE idvehiculo = ?";
+
+    try (PreparedStatement ps = cn.prepareStatement(sql)) {
+        ps.setInt(1, nuevoEstado);
+        ps.setInt(2, idVehiculo);
+        ps.executeUpdate();
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error actualizando estado del vehículo: " + e.getMessage());
+    }
+}
+
+    
+    
+    
+    
 
     private void registrar() {
         try {
@@ -269,6 +311,18 @@ public class FrmAlquiler extends javax.swing.JFrame {
             String itemEA = cmbEstado.getSelectedItem().toString();
             int idEA = Integer.parseInt(itemEA.split(" - ")[0].trim());
 
+            
+            if (!verificarVehiculoDisponible(idV)) {
+            JOptionPane.showMessageDialog(null,
+                    "Este vehículo no está disponible para alquiler.");
+            return;
+        }
+
+            
+            
+            
+            
+            
             String sql = "INSERT INTO alquiler (idcliente, idempleado, idvehiculo, fechainicio, totaldias, " +
                     "preciopordia, subtotal, garantia, isv, descuentoalquiler, totalpagar, kilometrajeinicial, idestadoalquiler) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -291,6 +345,12 @@ public class FrmAlquiler extends javax.swing.JFrame {
 
             if (ut.ejecutarActualizacion(sql, parametros)) {
                 JOptionPane.showMessageDialog(null, "Alquiler registrado correctamente.");
+                
+                
+                
+                actualizarEstadoVehiculo(idV, 4);
+                
+                
 
                 ut.mostrarDatos(sqlse, jTable1, new String[]{
                         "ID", "Cliente", "Vehículo", "Fecha Inicio", "Total", "Estado"
@@ -304,6 +364,17 @@ public class FrmAlquiler extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Error al registrar alquiler: " + ex.getMessage());
         }
     }
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
     
     private void seleccionarItemCombo(JComboBox<String> combo, int id) {
         for (int i = 0; i < combo.getItemCount(); i++) {

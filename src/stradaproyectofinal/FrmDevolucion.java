@@ -226,6 +226,22 @@ public class FrmDevolucion extends javax.swing.JFrame {
     this.repaint();
     }
     
+    
+    private void actualizarEstadoVehiculo(String idAlquiler, int nuevoEstado) {
+    String sql = "UPDATE vehiculos " +
+                 "SET idestadovehiculo=? " +
+                 "WHERE idvehiculo = (SELECT idvehiculo FROM alquiler WHERE idalquiler=?)";
+
+    try (PreparedStatement ps = cn.prepareStatement(sql)) {
+        ps.setInt(1, nuevoEstado);
+        ps.setString(2, idAlquiler);
+        ps.executeUpdate();
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(null, "Error al actualizar estado del vehículo: " + e.getMessage());
+    }
+}
+
+    
     private void registrarDevolucion() {
         if (!validarDevolucion()) return; 
 
@@ -262,6 +278,9 @@ public class FrmDevolucion extends javax.swing.JFrame {
         if (ut.ejecutarActualizacion(sqlInsert, parametros)) {
             JOptionPane.showMessageDialog(null, "Devolución registrada correctamente.");
             actualizarKilometrajeVehiculo(idAlquiler, kilometrajeFinal);
+            actualizarEstadoVehiculo(idAlquiler, 1);
+            
+            
             ut.mostrarDatos(sqlMostrar, jTable1, new String[]{"ID", "ID Alquiler", "Fecha Final", "Kilometraje Final", "Daño", "Cargo Extra"});
             idAlqui = obtenerUltimoIdVenta();
                 btnCompro.setEnabled(true);

@@ -10,6 +10,8 @@ import com.mysql.jdbc.PreparedStatement;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
@@ -241,6 +243,13 @@ TxtSerie.addKeyListener(new java.awt.event.KeyAdapter() {
            + "JOIN proveedores p ON v.idproveedor = p.idproveedor "
            + "JOIN tipovehiculo t ON v.idtipovehiculo = t.idtipovehiculo "
            + "JOIN estadovehiculo e ON v.idestadovehiculo = e.idestadovehiculo";
+    
+    
+   
+
+
+
+
     
     private void registrar() {
         if (!validarCampos()) return;

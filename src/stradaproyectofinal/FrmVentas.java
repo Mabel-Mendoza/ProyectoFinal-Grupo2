@@ -19,8 +19,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.PreparedStatement;
 import java.text.DecimalFormat;
+
+import java.sql.PreparedStatement;
 
 
 /**
@@ -105,6 +106,13 @@ public class FrmVentas extends javax.swing.JFrame {
         car.cargarDatos(cmbEmpleado, "empleados", "idempleado", "CONCAT(nombreempleado, ' ', apellidoempleado)");
         car.cargarDatos(cmbVehiculo, "vehiculos", "idvehiculo", "placa");
         car.cargarDatos(cmbEstado, "estadoventa", "idestadoventa", "descripcion");
+        
+        
+        car.cargarDatos(cmbVehiculo, 
+        "vehiculos WHERE idestadovehiculo = 1",  // Solo disponibles
+        "idvehiculo", 
+        "placa");
+
 
         // Descuentos: 0 = sin descuento, 1 = Tercera Edad (15%), 2 = Promoción (10%)
         cmbDescuento.removeAllItems();
@@ -249,56 +257,86 @@ public class FrmVentas extends javax.swing.JFrame {
         return idVenta;
     }
     
+    
+    
+    private boolean verificarVehiculoDisponible(int idVehiculo) {
+    String sql = "SELECT idestadovehiculo FROM vehiculos WHERE idvehiculo = ?";
+
+    try (PreparedStatement ps = cn.prepareStatement(sql)) {
+        ps.setInt(1, idVehiculo);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            int estado = rs.getInt("idestadovehiculo");
+            return estado == 1; // 1 = Disponible
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(null, "Error verificando estado: " + e.getMessage());
+    }
+
+    return false;
+}
+
+    
+
+    
+    
+    
     private int idVent;
 
     private void registrar() {
     try {
-        // validar antes de intentar insertar
         if (!validarCampos()) return;
 
-        String itemC = cmbCliente.getSelectedItem().toString();
-        int idC = Integer.parseInt(itemC.split(" - ", 2)[0].trim());
-
-        String itemE = cmbEmpleado.getSelectedItem().toString();
-        int idE = Integer.parseInt(itemE.split(" - ", 2)[0].trim());
-
         String itemV = cmbVehiculo.getSelectedItem().toString();
-        int idV = Integer.parseInt(itemV.split(" - ", 2)[0].trim());
+        int idVehiculo = Integer.parseInt(itemV.split(" - ")[0].trim());
 
-        String itemEV = cmbEstado.getSelectedItem().toString();
-        int idEV = Integer.parseInt(itemEV.split(" - ", 2)[0].trim());
+        // Verificar disponibilidad
+        if (!verificarVehiculoDisponible(idVehiculo)) {
+            JOptionPane.showMessageDialog(null, "❌ El vehículo seleccionado no está disponible para venta.");
+            return;
+        }
 
+        // === INSERTAR VENTA ===
         String sql = "INSERT INTO ventas (idcliente, idempleado, idvehiculo, fecha, precioventa, descuentoventa, isv, totalventa, idestadoventa) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setInt(1, idC);
-            ps.setInt(2, idE);
-            ps.setInt(3, idV);
-            ps.setDate(4, new java.sql.Date(jDateVenta.getDate().getTime()));
-            ps.setBigDecimal(5, BigDecimal.valueOf(precioVenta).setScale(2, RoundingMode.HALF_UP));
-            ps.setBigDecimal(6, BigDecimal.valueOf(descuento).setScale(2, RoundingMode.HALF_UP));
-            ps.setBigDecimal(7, BigDecimal.valueOf(isv).setScale(2, RoundingMode.HALF_UP));
-            ps.setBigDecimal(8, BigDecimal.valueOf(total).setScale(2, RoundingMode.HALF_UP));
-            ps.setInt(9, idEV);
+        PreparedStatement ps = cn.prepareStatement(sql);
+        ps.setInt(1, Integer.parseInt(cmbCliente.getSelectedItem().toString().split(" - ")[0].trim()));
+        ps.setInt(2, Integer.parseInt(cmbEmpleado.getSelectedItem().toString().split(" - ")[0].trim()));
+        ps.setInt(3, idVehiculo);
+        ps.setDate(4, new java.sql.Date(jDateVenta.getDate().getTime()));
+        ps.setBigDecimal(5, BigDecimal.valueOf(precioVenta).setScale(2));
+        ps.setBigDecimal(6, BigDecimal.valueOf(descuento).setScale(2));
+        ps.setBigDecimal(7, BigDecimal.valueOf(isv).setScale(2));
+        ps.setBigDecimal(8, BigDecimal.valueOf(total).setScale(2));
+        ps.setInt(9, 1); // Estado "Venta completada" en estadoventa
 
-            int filas = ps.executeUpdate();
-            if (filas > 0) {
-                JOptionPane.showMessageDialog(null, "Venta registrada correctamente.");
-                ut.mostrarDatos(sqlse, jTable1, new String[]{
-                    "ID", "Cliente", "Empleado", "Vehículo", "Fecha", "Precio", "Descuento", "ISV", "Total", "Estado"
-                });
-                idVent = obtenerUltimoIdVenta();
-                btnFactura11.setEnabled(true);
-            } else {
-                JOptionPane.showMessageDialog(null, "No se pudo registrar la venta.");
-            }
+        int filas = ps.executeUpdate();
+
+        if (filas > 0) {
+
+            // === ACTUALIZAR ESTADO DEL VEHÍCULO A VENDIDO ===
+            String updateVehiculo = "UPDATE vehiculos SET idestadovehiculo = 2 WHERE idvehiculo = ?";
+            PreparedStatement ps2 = cn.prepareStatement(updateVehiculo);
+            ps2.setInt(1, idVehiculo);
+            ps2.executeUpdate();
+
+            JOptionPane.showMessageDialog(null, "Venta registrada y estado de vehículo actualizado a VENDIDO.");
+
+            ut.mostrarDatos(sqlse, jTable1, new String[]{
+                "ID", "Cliente", "Empleado", "Vehículo", "Fecha", "Precio", "Descuento", "ISV", "Total", "Estado"
+            });
+
+            idVent = obtenerUltimoIdVenta();
+            btnFactura11.setEnabled(true);
         }
 
     } catch (Exception ex) {
         JOptionPane.showMessageDialog(null, "Error al registrar venta: " + ex.getMessage());
     }
 }
+
 
     
     
